@@ -116,7 +116,7 @@
 <body>
 <header>
   <h1>⛳ High-Low Scorecard</h1>
-  <div class="sub">Yellowstone Country Club — Billings, Montana · Blue Tees · Par 72 · 71.5/142</div>
+  <div class="sub">Yellowstone Country Club — Billings, Montana · Blue Tees · Par 72 · 72.2/145</div>
   <span class="badge" id="liveStanding">All square</span>
 </header>
 
@@ -187,27 +187,26 @@
 </main>
 
 <footer>
-  Par and stroke index are verified for the front nine (and are the same from any tee); per-hole Blue-tee
-  yardages couldn’t be retrieved, so they’re approximate — edit any Yards / Par / S.I. cell to match the
-  clubhouse card. Everything saves automatically on this device.
+  Course data is the club’s published men’s Blue rating (31-Mar-2026): per-hole par, stroke index and
+  yardage. Edit any Yards / Par / S.I. cell if it ever changes. Everything saves automatically on this device.
 </footer>
 
 <script>
 "use strict";
 const STORAGE_KEY = "yccHighLow_v2";
+const COURSE_VERSION = 2;   // bump when DEFAULT_COURSE changes so saved rounds pick up corrections
 
-/* ---- Default course: Yellowstone Country Club, Billings (Blue tees, par 72, 71.5/142) ----
-   Par and stroke index are tee-independent; the front-nine values are verified from public
-   scorecards. Per-hole Blue-tee yardages were not publicly retrievable, so they are
-   approximate and fully editable in the table — correct them against the clubhouse card. */
+/* ---- Default course: Yellowstone Country Club, Billings — Blue tees (par 72, 72.2/145) ----
+   Verified from the club's published men's Blue rating (31-Mar-2026): per-hole par, stroke
+   index and yardage. Still editable inline should a tee or rating ever change. */
 const DEFAULT_COURSE = [
-  {par:4, si:3,  yds:430}, {par:4, si:11, yds:378}, {par:5, si:5,  yds:490},
-  {par:4, si:9,  yds:372}, {par:3, si:15, yds:178}, {par:4, si:13, yds:350},
-  {par:5, si:7,  yds:500}, {par:3, si:17, yds:158}, {par:4, si:1,  yds:432},
-  // back nine (approximate Blue-tee yardages)
-  {par:4, si:4,  yds:388}, {par:4, si:12, yds:365}, {par:3, si:16, yds:165},
-  {par:5, si:2,  yds:520}, {par:4, si:10, yds:378}, {par:4, si:8,  yds:405},
-  {par:3, si:18, yds:150}, {par:4, si:14, yds:358}, {par:5, si:6,  yds:495}
+  {par:4, si:5,  yds:433}, {par:4, si:7,  yds:382}, {par:5, si:13, yds:492},
+  {par:4, si:1,  yds:377}, {par:3, si:15, yds:173}, {par:4, si:9,  yds:345},
+  {par:5, si:11, yds:500}, {par:3, si:17, yds:143}, {par:4, si:3,  yds:432},
+  // back nine
+  {par:4, si:4,  yds:442}, {par:4, si:10, yds:368}, {par:5, si:12, yds:554},
+  {par:3, si:18, yds:174}, {par:4, si:2,  yds:437}, {par:4, si:16, yds:344},
+  {par:5, si:14, yds:523}, {par:3, si:8,  yds:200}, {par:4, si:6,  yds:420}
 ];
 
 /* Bet schedule: front nine at the base stake; from hole 10 the stake is the hole-9 value + 1. */
@@ -222,6 +221,7 @@ function defaultState(){
       {name:"Player 3", hcp:0, team:1}, {name:"Player 4", hcp:0, team:1}
     ],
     course: DEFAULT_COURSE.map(h=>({...h})),
+    courseVersion: COURSE_VERSION,
     bets:   betSchedule(5),
     greenie:Array(18).fill(null),        // per hole: null = none, 0 = Team 1, 1 = Team 2
     scores: Array.from({length:18},()=>[null,null,null,null])
@@ -234,6 +234,7 @@ function load(){
     const s = JSON.parse(localStorage.getItem(STORAGE_KEY));
     if(s && s.players && s.course && s.scores){
       if(!Array.isArray(s.greenie)) s.greenie=Array(18).fill(null);
+      if(s.courseVersion!==COURSE_VERSION){ s.course=DEFAULT_COURSE.map(h=>({...h})); s.courseVersion=COURSE_VERSION; }
       s.players.forEach((p,i)=>{ if(p.team==null) p.team = i < s.players.length/2 ? 0 : 1; });
       const n=s.players.length;            // keep each hole's score row aligned with player count
       s.scores = s.scores.map(row=>{ row=(row||[]).slice(0,n); while(row.length<n) row.push(null); return row; });

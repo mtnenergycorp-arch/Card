@@ -27,17 +27,17 @@ framework, no package manager.
 Everything lives in `index.html`:
 
 - **`DEFAULT_COURSE`** — the 18-hole Yellowstone CC data (par / stroke index /
-  yardage, **Blue tees**, par 72, 71.5/142). **Par and stroke index are
-  tee-independent and the front nine is verified** from public scorecards;
-  per-hole **Blue yardages are approximate** (not publicly retrievable) and are
-  editable inline in the table.
+  yardage, **Blue tees**, par 72, 72.2/145), verified from the club's published
+  men's Blue rating (31-Mar-2026). Editable inline. Bump `COURSE_VERSION` when
+  these change so `load()` refreshes the course on already-saved rounds.
 - **`betSchedule(base)`** — builds the per-hole bet array: front nine at the
   base stake, back nine auto-pressed to the **hole-9 value + 1** (the automatic
   press on hole 10). Used by `defaultState`, the base-bet input, and "New round".
 - **`defaultState()` / `state`** — the full app state (2–6 `players` each with
   `{name, hcp, team}`, team names, per-hole bets, scores, course data). Persisted
   to `localStorage` under the key `yccHighLow_v2`; `load()` migrates older saves
-  (adds `team`, aligns each score row to the player count).
+  (adds `team`, aligns each score row to the player count, and refreshes the
+  course when `courseVersion` is stale).
 - **`playingHcaps()`** — converts course handicaps to match-play strokes: the
   lowest index in the group plays off scratch and everyone else gets the
   difference. `calc()` and `recompute()` use these (not raw handicaps) for nets

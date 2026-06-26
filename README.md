@@ -29,10 +29,9 @@ automatically on the device.
   stake **auto-presses to the hole-9 value + $1**. The dollar move =
   (Team 1 − Team 2 points) × that hole's bet; the running **Total** shows who
   owes whom.
-- **Editable course data.** Blue tees, par 72. Par and stroke index are
-  verified for the front nine (and are the same from any tee); per-hole Blue
-  yardages are approximate — edit any Yards / Par / S.I. cell to match the
-  clubhouse card.
+- **Course data.** Blue tees, par 72, 72.2/145 — per-hole par, stroke index and
+  yardage from the club's published men's Blue rating (31-Mar-2026). Edit any
+  Yards / Par / S.I. cell if it ever changes.
 
 ## How High-Low works
 
