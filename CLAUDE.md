@@ -27,8 +27,13 @@ framework, no package manager.
 Everything lives in `index.html`:
 
 - **`DEFAULT_COURSE`** — the 18-hole Yellowstone CC data (par / stroke index /
-  yardage, Black tees). The **front nine is verified** from public scorecards;
-  the **back nine is seeded with defaults** and is editable inline in the table.
+  yardage, **Blue tees**, par 72, 71.5/142). **Par and stroke index are
+  tee-independent and the front nine is verified** from public scorecards;
+  per-hole **Blue yardages are approximate** (not publicly retrievable) and are
+  editable inline in the table.
+- **`betSchedule(base)`** — builds the per-hole bet array: front nine at the
+  base stake, back nine auto-pressed to **double** (the automatic press on
+  hole 10). Used by `defaultState`, the base-bet input, and "New round".
 - **`defaultState()` / `state`** — the full app state (players, handicaps, team
   names, per-hole bets, scores, course data). Persisted to `localStorage`
   under the key `yccHighLow_v1`.
@@ -38,13 +43,16 @@ Everything lives in `index.html`:
 - **`calc()`** — the scoring engine. Computes net scores, the four point
   categories (low / high / greenie / net birdie), the sweep doubling, money
   won/lost, and the running total.
-- **`greenieSelect(i)`** — builds the per-hole greenie dropdown (none / Team 1 /
-  Team 2); handled via the delegated `data-greenie` branch in the `input`
-  listener.
-- **`render*()` / `recompute()`** — DOM rendering. Inputs are built once;
-  `recompute()` updates only the computed cells (nets, results, money,
-  summary) so typing never loses focus. Driven by a single delegated `input`
-  listener keyed off `data-*` attributes.
+- **Greenie** — a tap-to-cycle cell (none → Team 1 → Team 2 → none) handled by
+  a delegated `click` listener on `[data-greenie]`.
+- **`renderCard()` / `recompute()`** — DOM rendering. The scorecard is the
+  **classic grid** (holes across the top, OUT/IN/TOT columns, players down a
+  sticky left column under editable team-name bands). `renderCard()` builds the
+  inputs once; `recompute()` only fills the computed cells (per-nine totals,
+  stroke highlights, nets, points, money, running total) so typing never loses
+  focus. A single delegated `input` listener keyed off `data-*` drives edits;
+  player/team **name** edits update state + summary only (no rebuild) to keep
+  the focused field alive.
 
 ## How the game is scored
 
@@ -57,6 +65,9 @@ Everything lives in `index.html`:
   **12** (`sweep` / `t1`/`t2` in `calc()`).
 - **Money:** (Team 1 points − Team 2 points) × that hole's bet. The running
   **Total** is from Team 1's perspective (positive = Team 1 is up).
+- **Presses:** raising a hole's bet cascades that stake forward to the end of
+  the round (the `data-bet` handler writes `bets[i..17]`). The back nine
+  **auto-presses to double** the front-nine base (see `betSchedule`).
 - A hole only counts once all four scores are entered. Greenie is the only
   manual input (a per-hole `state.greenie` value: `null`/`0`/`1`).
 

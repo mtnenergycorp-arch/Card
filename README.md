@@ -12,21 +12,26 @@ automatically on the device.
 
 ## What it does
 
-- **4 players, 2 teams.** Enter names and each player's **course handicap**.
-- **Net scoring by stroke index.** Strokes are given on the hardest holes
-  automatically; a green net number means a stroke was received on that hole.
+- **Classic scorecard layout.** Holes run across the top with OUT / IN / TOT
+  columns; players sit down the left under editable **team-name** bands. Enter
+  player names and handicaps right in the card.
+- **Net scoring with stroke marks.** Holes where a player gets a stroke are
+  highlighted gold with a • dot (two dots = two strokes), allocated by stroke
+  index from their handicap. The small grey number in each box is the net score.
 - **High-Low, 6 points per hole.** Low (2 pts) to the team with the lower
   *best* net, High (2 pts) to the team with the lower *worst* net, Greenie
-  (1 pt, awarded by hand in the **Grn** column), and Net birdie (1 pt, best net
+  (1 pt, tap the **Greenie** row to award), and Net birdie (1 pt, best net
   under par). Ties push. Win all six outright and the hole **sweeps** —
   doubling to 12.
-- **Money per hole.** Set a default bet, or change the bet on any individual
-  hole. The dollar move = (Team 1 − Team 2 points) × bet; the running **Total**
-  shows who owes whom.
-- **Editable course data.** Front-nine par / stroke index / yardage (Black
-  tees) are pre-filled from public scorecards; the back nine is seeded with
-  defaults — tap any Par / SI / Yds cell to correct it against the clubhouse
-  card.
+- **Money, presses & auto-press.** Set a base bet; raise the bet on any hole
+  and the higher stake carries through the rest of the round. The back nine
+  **auto-presses to double** the front-nine stake (hole 10). The dollar move =
+  (Team 1 − Team 2 points) × that hole's bet; the running **Total** shows who
+  owes whom.
+- **Editable course data.** Blue tees, par 72. Par and stroke index are
+  verified for the front nine (and are the same from any tee); per-hole Blue
+  yardages are approximate — edit any Yards / Par / S.I. cell to match the
+  clubhouse card.
 
 ## How High-Low works
 
@@ -42,6 +47,10 @@ Six points are in play on every hole:
 Ties push (no points). **Win all six outright and the hole sweeps — the total
 doubles to 12.** The dollar move = (Team 1 points − Team 2 points) × that
 hole's bet, and the running total is shown from Team 1's perspective.
+
+**Presses:** raise the bet on any hole and that higher stake stays for the rest
+of the round. There's an automatic press on hole 10 — the back nine plays for
+double the front-nine stake.
 
 ## Tech
 

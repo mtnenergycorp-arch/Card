@@ -7,122 +7,134 @@
 <style>
   :root{
     --green:#1b5e20; --green-d:#0f3d15; --green-l:#2e7d32;
-    --gold:#c9a227; --bg:#f3f1e9; --card:#fff; --line:#d8d4c4;
+    --gold:#c9a227; --bg:#f3f1e9; --card:#fff; --line:#cfcab8;
     --t1:#1565c0; --t2:#c62828; --ink:#222; --muted:#6b6b6b;
+    --t1bg:#e8f0fb; --t2bg:#fbe9e9; --stroke:#fff2c4; --stroke2:#ffe49c;
   }
   *{box-sizing:border-box}
   body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
        background:var(--bg);color:var(--ink);font-size:15px;-webkit-text-size-adjust:100%}
-  header{background:linear-gradient(135deg,var(--green),var(--green-d));color:#fff;padding:16px 18px;
+  header{background:linear-gradient(135deg,var(--green),var(--green-d));color:#fff;padding:14px 18px;
          box-shadow:0 2px 6px rgba(0,0,0,.25)}
   header h1{margin:0;font-size:18px;letter-spacing:.3px}
   header .sub{margin-top:3px;font-size:12.5px;opacity:.85}
   header .badge{display:inline-block;margin-top:6px;font-size:11px;background:var(--gold);color:#000;
-                padding:2px 8px;border-radius:10px;font-weight:600}
-  main{max-width:1100px;margin:0 auto;padding:14px}
-  .panel{background:var(--card);border:1px solid var(--line);border-radius:10px;margin-bottom:14px;
+                padding:2px 8px;border-radius:10px;font-weight:700}
+  main{max-width:1200px;margin:0 auto;padding:12px}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:10px;margin-bottom:12px;
          box-shadow:0 1px 3px rgba(0,0,0,.06);overflow:hidden}
-  .panel > summary, .panel-head{background:#fafaf5;padding:11px 14px;font-weight:700;cursor:pointer;
-         border-bottom:1px solid var(--line);font-size:14px;display:flex;justify-content:space-between;align-items:center}
+  .panel-head{background:#fafaf5;padding:10px 14px;font-weight:700;border-bottom:1px solid var(--line);
+         font-size:14px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
   .panel-body{padding:14px}
-  .grid{display:grid;gap:12px}
-  .players-grid{grid-template-columns:repeat(2,1fr)}
-  @media(min-width:720px){.players-grid{grid-template-columns:repeat(4,1fr)}}
-  .pcard{border:1px solid var(--line);border-radius:8px;padding:10px;background:#fcfcf9}
-  .pcard.t1{border-top:4px solid var(--t1)} .pcard.t2{border-top:4px solid var(--t2)}
-  .pcard label{display:block;font-size:11px;color:var(--muted);margin:6px 0 2px;text-transform:uppercase;letter-spacing:.4px}
-  input,select{font:inherit;padding:7px 8px;border:1px solid var(--line);border-radius:6px;width:100%;background:#fff}
-  input:focus,select:focus{outline:2px solid var(--green-l);outline-offset:-1px}
-  input[type=number]{-moz-appearance:textfield}
-  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
-  .field{flex:1;min-width:130px}
-  .field label{display:block;font-size:11px;color:var(--muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:.4px}
-  .teamtag{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:middle}
-  .teamtag.t1{background:var(--t1)} .teamtag.t2{background:var(--t2)}
-  /* scorecard */
-  .tablewrap{overflow-x:auto}
-  table{border-collapse:collapse;width:100%;font-size:13px;min-width:760px}
-  th,td{border:1px solid var(--line);padding:5px 6px;text-align:center;white-space:nowrap}
-  thead th{background:var(--green);color:#fff;font-weight:600;position:sticky;top:0;font-size:12px}
-  th.t1head{background:var(--t1)} th.t2head{background:var(--t2)}
-  tbody td.holecell{font-weight:700;background:#fafaf5}
-  tbody tr:nth-child(even) td{background:#fbfbf7}
-  .meta-in{width:42px;padding:3px;text-align:center;font-size:12px}
-  .score-in{width:46px;padding:6px 3px;text-align:center;font-weight:600;font-size:15px}
-  .net{display:block;font-size:10.5px;color:var(--muted);margin-top:1px}
-  .net.stroke{color:var(--green-l);font-weight:700}
-  .bet-in{width:62px;text-align:center}
-  .grn-in{width:74px;padding:5px 4px;font-size:12px}
-  td.res.sweep{background:#fff6d3 !important;box-shadow:inset 0 0 0 2px var(--gold)}
-  td.res.sweep .pt{color:#9a7b00}
-  td.money{font-weight:700;font-variant-numeric:tabular-nums}
-  .pos{color:var(--green-l)} .neg{color:var(--t2)} .zero{color:var(--muted)}
-  .res .pt{font-weight:700} .res small{color:var(--muted);display:block;font-size:10px}
-  .turn-row td{background:#eef3ec;font-weight:700;font-size:12px}
-  .total-row td{background:#e8efe6;font-weight:800;font-size:13px}
+  .toolbar{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+  .toolbar label{font-size:12px;color:var(--muted)}
+  .toolbar input{width:80px;padding:7px 8px;border:1px solid var(--line);border-radius:6px;text-align:center;font:inherit}
+  .hint{font-size:12px;color:var(--muted);font-weight:400}
+
+  /* ---------- scorecard grid ---------- */
+  .tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table.sc{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%;font-size:13px}
+  .sc th,.sc td{border-right:1px solid var(--line);border-bottom:1px solid var(--line);
+                text-align:center;padding:0;min-width:42px;height:38px;background:#fff}
+  .sc thead th{position:sticky;top:0;z-index:2;background:var(--green);color:#fff;font-weight:700;
+               font-size:12px;height:30px;padding:0 4px;border-color:#26682b}
+  .sc th.sum,.sc td.sum{background:#eef3ea;font-weight:800;min-width:46px}
+  .sc thead th.sum{background:var(--green-d)}
+  /* sticky first column */
+  .sc .lbl{position:sticky;left:0;z-index:3;text-align:left;min-width:128px;max-width:128px;
+           padding:3px 8px;font-size:11px;font-weight:700;color:#333;text-transform:uppercase;letter-spacing:.4px;
+           background:#f1ecdd;box-shadow:2px 0 4px rgba(0,0,0,.05)}
+  .sc thead th.lbl{z-index:4;background:var(--green);color:#fff}
+  /* info rows */
+  .sc .inforow td{background:#faf7ee;color:#555;font-size:12px}
+  .sc input.cell{width:100%;height:36px;border:0;background:transparent;text-align:center;font:inherit;
+                 color:inherit;border-radius:0;padding:0}
+  .sc input.cell:focus{outline:2px solid var(--green-l);outline-offset:-2px;background:#fff}
+  .sc input.cell.meta{font-size:12px;color:#555}
+  /* team band */
+  .sc .bandrow td{height:28px;border-bottom:2px solid var(--line)}
+  .sc td.band.t1{background:var(--t1bg)} .sc td.band.t2{background:var(--t2bg)}
+  .sc .bandlbl{padding:0}
+  .sc .bandlbl.t1{background:var(--t1bg);border-left:5px solid var(--t1)}
+  .sc .bandlbl.t2{background:var(--t2bg);border-left:5px solid var(--t2)}
+  .sc input.tname{width:100%;height:28px;border:0;background:transparent;font-weight:800;font-size:13px;
+                  padding:0 6px;text-transform:none;letter-spacing:0}
+  .sc .bandrow.t1 input.tname{color:var(--t1)} .sc .bandrow.t2 input.tname{color:var(--t2)}
+  /* player rows */
+  .sc td.playerlbl{padding:2px 6px;background:#fff;text-transform:none;letter-spacing:0}
+  .sc td.playerlbl.t1{border-left:5px solid var(--t1)} .sc td.playerlbl.t2{border-left:5px solid var(--t2)}
+  .sc input.pname{width:100%;border:0;background:transparent;font-weight:700;font-size:13px;padding:1px 0;color:#222}
+  .sc .hcpline{font-size:10px;color:#888;display:flex;align-items:center;gap:4px;font-weight:600}
+  .sc input.phcp{width:38px;border:1px solid var(--line);border-radius:4px;text-align:center;font-size:11px;padding:1px 0}
+  .sc td.scorecell{position:relative;height:40px;min-width:44px}
+  .sc td.scorecell input.score{position:absolute;inset:0;width:100%;height:100%;border:0;background:transparent;
+                 text-align:center;font-weight:700;font-size:16px;color:#1a1a1a}
+  .sc td.scorecell input.score:focus{outline:2px solid var(--green-l);outline-offset:-2px;background:#fff}
+  .sc td.scorecell.stroke{background:var(--stroke)} .sc td.scorecell.stroke2{background:var(--stroke2)}
+  .sc td.scorecell.give{background:#f1f1f1}
+  .sc .dots{position:absolute;top:1px;left:3px;font-size:10px;color:#b07d00;line-height:1;z-index:1;pointer-events:none}
+  .sc .netv{position:absolute;bottom:1px;right:3px;font-size:9px;color:#999;line-height:1;z-index:1;pointer-events:none}
+  .sc .netv.under{color:var(--green-l);font-weight:800}
+  /* bet + greenie + result rows */
+  .sc .betrow td,.sc .grnrow td{height:32px;background:#fcfbf6}
+  .sc input.cell.bet{font-size:12px}
+  .sc td.betcell.autopress{box-shadow:inset 4px 0 0 var(--gold);background:#fdf7e3}
+  .sc td.grn{cursor:pointer;font-weight:800;font-size:12px;user-select:none;-webkit-user-select:none;color:#aaa}
+  .sc td.grn.g1{background:var(--t1bg);color:var(--t1)} .sc td.grn.g2{background:var(--t2bg);color:var(--t2)}
+  .sc .resrow td{font-weight:700;font-variant-numeric:tabular-nums;font-size:12.5px}
+  .sc .resrow.running td{background:#f4f1e6}
+  .sc td.pt.sweep{background:var(--stroke2);box-shadow:inset 0 0 0 2px var(--gold)}
+  .pos{color:var(--green-l)} .neg{color:var(--t2)} .zero{color:#aaa}
+
   /* summary */
   .summary-grid{display:grid;gap:12px;grid-template-columns:1fr}
   @media(min-width:680px){.summary-grid{grid-template-columns:1fr 1fr}}
-  .standing{font-size:15px;padding:14px;border-radius:10px;text-align:center;border:1px solid var(--line);background:#fcfcf9}
+  .standing{padding:14px;border-radius:10px;text-align:center;border:1px solid var(--line);background:#fcfcf9}
   .standing .big{font-size:30px;font-weight:800;margin:6px 0;font-variant-numeric:tabular-nums}
   .standing .who{font-size:13px;color:var(--muted)}
-  table.sum{min-width:0;width:100%}
-  table.sum th{background:#fafaf5;color:var(--ink);border-color:var(--line)}
-  .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
-  button{font:inherit;font-weight:600;padding:9px 14px;border:1px solid var(--line);border-radius:8px;
-         background:#fff;cursor:pointer}
+  table.tot{border-collapse:collapse;width:100%;font-size:13px}
+  table.tot th,table.tot td{border:1px solid var(--line);padding:6px 8px;text-align:center}
+  table.tot th{background:#fafaf5}
+  .teamtag{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:middle}
+  .teamtag.t1{background:var(--t1)} .teamtag.t2{background:var(--t2)}
+  .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+  button{font:inherit;font-weight:700;padding:9px 14px;border:1px solid var(--line);border-radius:8px;background:#fff;cursor:pointer}
   button.primary{background:var(--green);color:#fff;border-color:var(--green-d)}
   button.warn{color:var(--t2)}
   button:active{transform:translateY(1px)}
-  .hint{font-size:12px;color:var(--muted);margin:4px 0 0}
-  details.rules summary{font-size:13px}
-  .rules-body{font-size:13px;line-height:1.55}
-  .rules-body li{margin:4px 0}
-  footer{max-width:1100px;margin:0 auto;padding:8px 14px 30px;color:var(--muted);font-size:11.5px}
+  .rules-body{font-size:13px;line-height:1.55} .rules-body li{margin:4px 0}
+  details.rules summary{cursor:pointer}
+  footer{max-width:1200px;margin:0 auto;padding:8px 14px 30px;color:var(--muted);font-size:11.5px}
 </style>
 </head>
 <body>
 <header>
   <h1>⛳ High-Low Scorecard</h1>
-  <div class="sub">Yellowstone Country Club — Billings, Montana · Black Tees · Par 72</div>
+  <div class="sub">Yellowstone Country Club — Billings, Montana · Blue Tees · Par 72 · 71.5/142</div>
   <span class="badge" id="liveStanding">All square</span>
 </header>
 
 <main>
-  <!-- SETUP -->
-  <details class="panel" open>
-    <summary>Players, Teams &amp; Stakes</summary>
-    <div class="panel-body">
-      <div class="row" style="margin-bottom:12px">
-        <div class="field">
-          <label>Team 1 name</label>
-          <input id="team1name" value="Team 1">
-        </div>
-        <div class="field">
-          <label>Team 2 name</label>
-          <input id="team2name" value="Team 2">
-        </div>
-        <div class="field">
-          <label>Default bet ($ per point / hole)</label>
-          <input id="defaultBet" type="number" min="0" step="1" inputmode="numeric" value="5">
-        </div>
+  <!-- TOOLBAR -->
+  <div class="panel">
+    <div class="panel-head">
+      <div class="toolbar">
+        <label>Base bet&nbsp; $<input id="defaultBet" type="number" min="0" step="1" inputmode="numeric" value="5"></label>
+        <span class="hint">per point · front-nine stake · back nine auto-presses to double · raise any hole to press from there on</span>
       </div>
-      <div class="grid players-grid" id="playersGrid"></div>
-      <p class="hint">Handicap = your <b>course handicap</b>. Strokes are allocated to the hardest holes by
-        stroke index (the “HCP”/“SI” column). Net score = gross − strokes received on that hole.</p>
     </div>
-  </details>
+  </div>
 
   <!-- SCORECARD -->
   <div class="panel">
-    <div class="panel-head">Scorecard <span class="hint" style="font-weight:400">Par / SI / Yards are editable</span></div>
-    <div class="panel-body" style="padding:0">
-      <div class="tablewrap">
-        <table id="card">
-          <thead><tr id="headRow"></tr></thead>
-          <tbody id="cardBody"></tbody>
-        </table>
-      </div>
+    <div class="panel-head">Scorecard
+      <span class="hint">Type names &amp; handicaps in the card · gold cells = a stroke given · tap a Greenie cell to award it</span>
+    </div>
+    <div class="tablewrap">
+      <table class="sc">
+        <thead id="cardHead"></thead>
+        <tbody id="cardBody"></tbody>
+      </table>
     </div>
   </div>
 
@@ -132,7 +144,7 @@
     <div class="panel-body">
       <div class="summary-grid">
         <div class="standing" id="standingCard"></div>
-        <div class="tablewrap"><table class="sum" id="sumTable"></table></div>
+        <table class="tot" id="sumTable"></table>
       </div>
       <div class="btnrow">
         <button class="primary" id="newRound">＋ New round (keep players)</button>
@@ -146,65 +158,61 @@
     <summary class="panel-head">How High-Low scoring works</summary>
     <div class="panel-body rules-body">
       <ul>
-        <li><b>Six points are in play on every hole:</b>
-          <ul>
-            <li><b>Low — 2 pts.</b> Team with the lower <i>best</i> net score.</li>
-            <li><b>High — 2 pts.</b> Team with the lower <i>worst</i> net score (lower of the two high scores).</li>
-            <li><b>Greenie — 1 pt.</b> Awarded by hand in the <b>Grn</b> column (closest to the pin / on the green).</li>
-            <li><b>Net birdie — 1 pt.</b> A team’s best net score is under par and the other team’s isn’t.</li>
-          </ul>
-        </li>
-        <li><b>Sweep = ×2.</b> Win all six points outright on a hole and the total doubles to <b>12</b>.</li>
-        <li><b>Ties push.</b> A tied Low, High, or net birdie scores nothing; an unawarded greenie scores nothing.</li>
-        <li><b>Money.</b> Each point is worth that hole’s bet. The dollar move = (Team 1 points − Team 2 points)
-            × bet. The <b>Total</b> column is the running balance from Team&nbsp;1’s perspective
-            (positive = Team&nbsp;1 is up).</li>
-        <li><b>Net scoring.</b> Strokes are given on the hardest holes by stroke index, from each player’s
-            course handicap. A green net number means a stroke was received on that hole.</li>
+        <li><b>Six points are in play on every hole:</b> Low (2) — lower <i>best</i> net · High (2) —
+            lower <i>worst</i> net · Greenie (1) — tap the <b>Greenie</b> row to award · Net birdie (1) —
+            a team’s best net is under par and the other’s isn’t.</li>
+        <li><b>Sweep = ×2.</b> Win all six points outright and the hole doubles to <b>12</b> (shown gold).</li>
+        <li><b>Ties push</b> (no points). <b>Money</b> = (Team 1 − Team 2 points) × that hole’s bet;
+            <b>Running&nbsp;$</b> is from Team&nbsp;1’s perspective (positive = Team&nbsp;1 up).</li>
+        <li><b>Presses.</b> Raise the <b>Bet $</b> on any hole and that higher stake carries through the rest
+            of the round. There’s an <b>automatic press on hole 10</b> (gold edge): the back nine plays for
+            double the front-nine stake.</li>
+        <li><b>Strokes.</b> A <span style="background:var(--stroke);padding:0 4px;border-radius:3px">gold cell</span>
+            with a • dot means that player gets a stroke there (two dots = two strokes), allocated by the
+            <b>S.I.</b> (stroke index) row from each player’s handicap. The small grey number is the net score.</li>
         <li>A hole only counts once all four scores are entered.</li>
-        <li><b>Result legend:</b> <code>L</code> Low · <code>H</code> High · <code>G</code> Greenie ·
-            <code>B</code> net Birdie, where <code>1</code> = Team&nbsp;1, <code>2</code> = Team&nbsp;2,
-            <code>½</code> = push, <code>·</code> = none.</li>
       </ul>
     </div>
   </details>
 </main>
 
 <footer>
-  Front-nine course data (par / stroke index / yardage) verified from public scorecards; the back nine is
-  seeded with reasonable defaults — tap any Par / SI / Yds cell to correct it against the clubhouse card.
-  Everything saves automatically on this device.
+  Par and stroke index are verified for the front nine (and are the same from any tee); per-hole Blue-tee
+  yardages couldn’t be retrieved, so they’re approximate — edit any Yards / Par / S.I. cell to match the
+  clubhouse card. Everything saves automatically on this device.
 </footer>
 
 <script>
 "use strict";
 const STORAGE_KEY = "yccHighLow_v2";
 
-/* ---- Default course: Yellowstone Country Club, Billings (Black tees, par 72) ----
-   Front nine verified from public scorecards. Back-nine par/SI/yardage are sensible
-   defaults (par 36) and are user-editable in the table. */
+/* ---- Default course: Yellowstone Country Club, Billings (Blue tees, par 72, 71.5/142) ----
+   Par and stroke index are tee-independent; the front-nine values are verified from public
+   scorecards. Per-hole Blue-tee yardages were not publicly retrievable, so they are
+   approximate and fully editable in the table — correct them against the clubhouse card. */
 const DEFAULT_COURSE = [
-  {par:4, si:3,  yds:457}, {par:4, si:11, yds:402}, {par:5, si:5,  yds:517},
-  {par:4, si:9,  yds:395}, {par:3, si:15, yds:198}, {par:4, si:13, yds:373},
-  {par:5, si:7,  yds:525}, {par:3, si:17, yds:173}, {par:4, si:1,  yds:458},
-  // back nine (editable defaults)
-  {par:4, si:4,  yds:410}, {par:4, si:12, yds:388}, {par:3, si:16, yds:182},
-  {par:5, si:2,  yds:548}, {par:4, si:10, yds:401}, {par:4, si:8,  yds:430},
-  {par:3, si:18, yds:165}, {par:4, si:14, yds:378}, {par:5, si:6,  yds:522}
+  {par:4, si:3,  yds:430}, {par:4, si:11, yds:378}, {par:5, si:5,  yds:490},
+  {par:4, si:9,  yds:372}, {par:3, si:15, yds:178}, {par:4, si:13, yds:350},
+  {par:5, si:7,  yds:500}, {par:3, si:17, yds:158}, {par:4, si:1,  yds:432},
+  // back nine (approximate Blue-tee yardages)
+  {par:4, si:4,  yds:388}, {par:4, si:12, yds:365}, {par:3, si:16, yds:165},
+  {par:5, si:2,  yds:520}, {par:4, si:10, yds:378}, {par:4, si:8,  yds:405},
+  {par:3, si:18, yds:150}, {par:4, si:14, yds:358}, {par:5, si:6,  yds:495}
 ];
+
+/* Bet schedule: front nine plays the base stake, back nine auto-presses to double (hole 10). */
+function betSchedule(base){ base=parseFloat(base)||0; const a=[]; for(let i=0;i<18;i++) a.push(i>=9?base*2:base); return a; }
 
 function defaultState(){
   return {
     team1name:"Team 1", team2name:"Team 2",
     defaultBet:5,
     players:[
-      {name:"Player 1", hcp:0},
-      {name:"Player 2", hcp:0},
-      {name:"Player 3", hcp:0},
-      {name:"Player 4", hcp:0}
+      {name:"Player 1", hcp:0}, {name:"Player 2", hcp:0},
+      {name:"Player 3", hcp:0}, {name:"Player 4", hcp:0}
     ],
     course: DEFAULT_COURSE.map(h=>({...h})),
-    bets:   Array(18).fill(5),
+    bets:   betSchedule(5),
     greenie:Array(18).fill(null),        // per hole: null = none, 0 = Team 1, 1 = Team 2
     scores: Array.from({length:18},()=>[null,null,null,null])
   };
@@ -223,9 +231,12 @@ function load(){
 }
 function save(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){} }
 
-const team = p => p<2 ? 0 : 1;            // players 0,1 -> team1 ; 2,3 -> team2
-const num  = v => { const n=parseFloat(v); return isFinite(n)?n:null; };
+const team  = p => p<2 ? 0 : 1;            // players 0,1 -> team1 ; 2,3 -> team2
+const num   = v => { const n=parseFloat(v); return isFinite(n)?n:null; };
 const money = n => (n<0?"-$":"$") + Math.abs(n).toLocaleString();
+const cat   = s => s===0?"1" : s===1?"2" : "·";
+const moneyClass = n => n>0?"pos":n<0?"neg":"zero";
+function escapeHtml(s){ return String(s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m])); }
 
 /* strokes received on a hole given course handicap + stroke index (supports >18 and plus handicaps) */
 function strokesFor(hcp, si){
@@ -237,7 +248,7 @@ function strokesFor(hcp, si){
   }
 }
 
-/* core computation */
+/* core computation (unchanged scoring engine) */
 function calc(){
   let run=0;
   const holes=[];
@@ -259,20 +270,17 @@ function calc(){
       const aHigh=Math.max(nets[0],nets[1]), bHigh=Math.max(nets[2],nets[3]);
       const low  = aLow<bLow ? 0 : aLow>bLow ? 1 : -1;     // 0 = Team 1, 1 = Team 2, -1 = push
       const high = aHigh<bHigh? 0 : aHigh>bHigh? 1 : -1;
-      // net birdie: best net under par, head-to-head, ties push
       const aBird=aLow<h.par, bBird=bLow<h.par;
       const bird = (aBird&&!bBird)?0 : (bBird&&!aBird)?1 : -1;
-      // greenie: manually awarded
-      const grn = (state.greenie[i]===0||state.greenie[i]===1) ? state.greenie[i] : -1;
+      const grn  = (state.greenie[i]===0||state.greenie[i]===1) ? state.greenie[i] : -1;
 
-      // points: Low 2, High 2, Greenie 1, Net birdie 1 (6 total) — sweep all 6 doubles to 12
       let p1=(low===0?2:0)+(high===0?2:0)+(grn===0?1:0)+(bird===0?1:0);
       let p2=(low===1?2:0)+(high===1?2:0)+(grn===1?1:0)+(bird===1?1:0);
       const sweep = p1===6 ? 0 : p2===6 ? 1 : -1;
       const t1 = sweep===0?12:p1, t2 = sweep===1?12:p2;
 
       const bet=num(state.bets[i])||0;
-      const net=t1-t2;                       // points, Team 1 perspective
+      const net=t1-t2;
       const m=net*bet; run+=m;
       tGross[0]+=g[0]+g[1]; tGross[1]+=g[2]+g[3];
       tNet[0]+=nets[0]+nets[1]; tNet[1]+=nets[2]+nets[3];
@@ -284,218 +292,220 @@ function calc(){
   return {holes, run, pGross, pNet, tGross, tNet, tPts, parOut,parIn, yardOut,yardIn};
 }
 
-/* ---------- rendering ---------- */
-function renderSetup(){
-  document.getElementById("team1name").value = state.team1name;
-  document.getElementById("team2name").value = state.team2name;
-  document.getElementById("defaultBet").value = state.defaultBet;
-  const grid=document.getElementById("playersGrid"); grid.innerHTML="";
-  state.players.forEach((pl,i)=>{
-    const t = team(i)===0?"t1":"t2";
-    const tn = team(i)===0?state.team1name:state.team2name;
-    const el=document.createElement("div");
-    el.className="pcard "+t;
-    el.innerHTML=`<div style="font-size:11px;color:var(--muted)"><span class="teamtag ${t}"></span>${tn}</div>
-      <label>Player name</label><input data-pname="${i}" value="${escapeHtml(pl.name)}">
-      <label>Course handicap</label><input data-phcp="${i}" type="number" step="1" inputmode="numeric" value="${pl.hcp}">`;
-    grid.appendChild(el);
-  });
+/* ---------- build the scorecard (inputs built once) ---------- */
+function headHTML(){
+  let h='<tr><th class="lbl">HOLE</th>';
+  for(let i=1;i<=9;i++) h+=`<th>${i}</th>`;
+  h+='<th class="sum">OUT</th>';
+  for(let i=10;i<=18;i++) h+=`<th>${i}</th>`;
+  h+='<th class="sum">IN</th><th class="sum">TOT</th></tr>';
+  return h;
 }
-
-function renderHead(){
-  const r=document.getElementById("headRow");
-  const p=state.players;
-  r.innerHTML =
-    `<th>Hole</th><th>Par</th><th>SI</th><th>Yds</th>`+
-    `<th class="t1head">${escapeHtml(p[0].name)}</th>`+
-    `<th class="t1head">${escapeHtml(p[1].name)}</th>`+
-    `<th class="t2head">${escapeHtml(p[2].name)}</th>`+
-    `<th class="t2head">${escapeHtml(p[3].name)}</th>`+
-    `<th>Bet</th><th>Grn</th><th>Result</th><th>Hole&nbsp;$</th><th>Total&nbsp;$</th>`;
-}
-
-function scoreCellsFor(i){
-  return [0,1,2,3].map(p=>{
-    const v = state.scores[i][p];
-    return `<td><input class="score-in" data-score="${i}" data-pl="${p}" type="number" inputmode="numeric"
-              min="1" value="${v==null?"":v}"><span class="net" id="net-${i}-${p}"></span></td>`;
-  }).join("");
-}
-
-function greenieSelect(i){
-  const v=state.greenie[i];
-  const o=(val,label,sel)=>`<option value="${val}"${sel?" selected":""}>${escapeHtml(label)}</option>`;
-  return `<select class="grn-in" data-greenie="${i}">`+
-    o("","—", v==null) + o("0",state.team1name, v===0) + o("1",state.team2name, v===1) + `</select>`;
-}
-
-function renderBody(){
-  const b=document.getElementById("cardBody"); b.innerHTML="";
+function metaRow(label, key, totals){
+  let h=`<tr class="inforow"><td class="lbl">${label}</td>`;
   for(let i=0;i<18;i++){
-    const h=state.course[i];
-    const tr=document.createElement("tr");
-    tr.innerHTML =
-      `<td class="holecell">${i+1}</td>`+
-      `<td><input class="meta-in" data-par="${i}" type="number" inputmode="numeric" value="${h.par}"></td>`+
-      `<td><input class="meta-in" data-si="${i}"  type="number" inputmode="numeric" value="${h.si}"></td>`+
-      `<td><input class="meta-in" data-yds="${i}" type="number" inputmode="numeric" value="${h.yds}"></td>`+
-      scoreCellsFor(i)+
-      `<td><input class="bet-in" data-bet="${i}" type="number" inputmode="numeric" min="0" value="${state.bets[i]}"></td>`+
-      `<td>${greenieSelect(i)}</td>`+
-      `<td class="res" id="res-${i}"></td>`+
-      `<td class="money" id="hm-${i}"></td>`+
-      `<td class="money" id="rm-${i}"></td>`;
-    b.appendChild(tr);
-    if(i===8) b.appendChild(turnRow("OUT"));
-    if(i===17) b.appendChild(turnRow("IN"));
+    h+=`<td><input class="cell meta" data-${key}="${i}" type="number" inputmode="numeric" value="${state.course[i][key]}"></td>`;
+    if(i===8) h+= totals?`<td class="sum" id="${key}-out"></td>`:`<td class="sum"></td>`;
+    if(i===17) h+= totals?`<td class="sum" id="${key}-in"></td><td class="sum" id="${key}-tot"></td>`:`<td class="sum"></td><td class="sum"></td>`;
   }
-  b.appendChild(totalRow());
+  return h+'</tr>';
 }
-function turnRow(which){
-  const tr=document.createElement("tr"); tr.className="turn-row";
-  tr.id = which==="OUT"?"row-out":"row-in";
-  tr.innerHTML=`<td>${which}</td><td id="${which}-par"></td><td></td><td id="${which}-yds"></td>
-    <td id="${which}-0"></td><td id="${which}-1"></td><td id="${which}-2"></td><td id="${which}-3"></td>
-    <td></td><td></td><td></td><td></td><td id="${which}-tot"></td>`;
-  return tr;
+function bandRow(ti){
+  const t=ti===0?'t1':'t2', name=ti===0?state.team1name:state.team2name;
+  return `<tr class="bandrow ${t}"><td class="lbl bandlbl ${t}">`+
+    `<input class="tname" data-tname="${ti}" value="${escapeHtml(name)}" placeholder="Team ${ti+1}"></td>`+
+    `<td class="band ${t}" colspan="21"></td></tr>`;
 }
-function totalRow(){
-  const tr=document.createElement("tr"); tr.className="total-row";
-  tr.innerHTML=`<td>TOTAL</td><td id="T-par"></td><td></td><td id="T-yds"></td>
-    <td id="T-0"></td><td id="T-1"></td><td id="T-2"></td><td id="T-3"></td>
-    <td></td><td></td><td></td><td></td><td id="T-tot"></td>`;
-  return tr;
+function playerRow(p){
+  const t=team(p)===0?'t1':'t2', pl=state.players[p];
+  let h=`<tr class="playerrow"><td class="lbl playerlbl ${t}">`+
+    `<input class="pname" data-pname="${p}" value="${escapeHtml(pl.name)}" placeholder="Player ${p+1}">`+
+    `<div class="hcpline">Hcp <input class="phcp" data-phcp="${p}" type="number" inputmode="numeric" value="${pl.hcp}"></div></td>`;
+  for(let i=0;i<18;i++){
+    const v=state.scores[i][p];
+    h+=`<td class="scorecell" id="sc-${i}-${p}"><span class="dots" id="dot-${i}-${p}"></span>`+
+       `<input class="score" data-score="${i}" data-pl="${p}" type="number" inputmode="numeric" min="1" value="${v==null?'':v}">`+
+       `<span class="netv" id="net-${i}-${p}"></span></td>`;
+    if(i===8) h+=`<td class="sum" id="pg-${p}-out"></td>`;
+    if(i===17) h+=`<td class="sum" id="pg-${p}-in"></td><td class="sum" id="pg-${p}-tot"></td>`;
+  }
+  return h+'</tr>';
+}
+function betRow(){
+  let h=`<tr class="betrow"><td class="lbl">Bet $</td>`;
+  for(let i=0;i<18;i++){
+    const cls = i===9 ? 'betcell autopress' : 'betcell';
+    const title = i===9 ? ' title="Auto-press: the back nine plays for double the front-nine stake"' : '';
+    h+=`<td class="${cls}"${title}><input class="cell bet" data-bet="${i}" type="number" inputmode="numeric" min="0" value="${state.bets[i]}"></td>`;
+    if(i===8) h+='<td class="sum"></td>';
+    if(i===17) h+='<td class="sum"></td><td class="sum"></td>';
+  }
+  return h+'</tr>';
+}
+function greenieRow(){
+  let h=`<tr class="grnrow"><td class="lbl">Greenie</td>`;
+  for(let i=0;i<18;i++){
+    h+=`<td class="grn" id="gr-${i}" data-greenie="${i}">–</td>`;
+    if(i===8) h+='<td class="sum"></td>';
+    if(i===17) h+='<td class="sum"></td><td class="sum"></td>';
+  }
+  return h+'</tr>';
+}
+function resRow(label, pre, cls){
+  let h=`<tr class="resrow ${cls}"><td class="lbl">${label}</td>`;
+  for(let i=0;i<18;i++){
+    h+=`<td id="${pre}-${i}"></td>`;
+    if(i===8) h+=`<td class="sum" id="${pre}-out"></td>`;
+    if(i===17) h+=`<td class="sum" id="${pre}-in"></td><td class="sum" id="${pre}-tot"></td>`;
+  }
+  return h+'</tr>';
+}
+function renderCard(){
+  document.getElementById('cardHead').innerHTML = headHTML();
+  document.getElementById('cardBody').innerHTML =
+    metaRow('Yards','yds',true) + metaRow('Par','par',true) + metaRow('S.I.','si',false) +
+    bandRow(0) + playerRow(0) + playerRow(1) +
+    bandRow(1) + playerRow(2) + playerRow(3) +
+    betRow() + greenieRow() +
+    resRow('Points (T1)','pt','points') + resRow('Hole $','hm','holemoney') + resRow('Running $','rm','running');
 }
 
-const moneyClass = n => n>0?"pos":n<0?"neg":"zero";
+/* ---------- fill computed cells (no input rebuild → focus preserved) ---------- */
+const setTxt   = (id,v)=>{ const e=document.getElementById(id); if(e) e.textContent=v; };
+const setMoney = (id,v)=>{ const e=document.getElementById(id); if(e){ e.textContent=money(v); e.className='sum money '+moneyClass(v);} };
+const setPts   = (id,v)=>{ const e=document.getElementById(id); if(e){ e.textContent=(v>0?'+':'')+v; e.className='sum pt '+moneyClass(v);} };
+function refreshBetInputs(){ document.querySelectorAll('input.bet').forEach(inp=>{ inp.value = state.bets[+inp.dataset.bet]; }); }
 
 function recompute(){
   const c=calc();
+  let parO=0,parI=0,ydO=0,ydI=0, ptO=0,ptI=0, hmO=0,hmI=0, anyPlayed=false;
+  const pgO=[0,0,0,0], pgI=[0,0,0,0];
 
-  // per-cell nets + per-hole result/money
   for(let i=0;i<18;i++){
-    const h=state.course[i];
-    [0,1,2,3].forEach(p=>{
-      const span=document.getElementById(`net-${i}-${p}`);
-      const v=state.scores[i][p];
-      if(v==null){ span.textContent=""; span.className="net"; return; }
+    const h=state.course[i], nine=i<9;
+    if(nine){ parO+=h.par; ydO+=(+h.yds||0); } else { parI+=h.par; ydI+=(+h.yds||0); }
+
+    // player strokes / dots / nets
+    for(let p=0;p<4;p++){
       const st=strokesFor(state.players[p].hcp,h.si);
-      const net=v-st;
-      span.textContent = "net "+net + (st>0?` (−${st})`:st<0?` (+${-st})`:"");
-      span.className = "net"+(st>0?" stroke":"");
-    });
-    const r=c.holes[i];
-    const res=document.getElementById(`res-${i}`);
-    const hm=document.getElementById(`hm-${i}`);
-    const rm=document.getElementById(`rm-${i}`);
-    if(!r.played){ res.innerHTML="—"; res.classList.remove("sweep"); hm.textContent=""; hm.className="money";
-      rm.textContent = money(r.run); rm.className="money "+moneyClass(r.run); continue; }
-    const cat = s => s===0?"1" : s===1?"2" : "·";                    // team won the category
-    const birdTag = r.bird===-1 ? ((r.aBird&&r.bBird)?"½":"·") : cat(r.bird);
-    const sweepTxt = r.sweep===-1 ? "" : " · SWEEP ×2";
-    res.innerHTML = `<span class="pt ${moneyClass(r.net)}">${r.net>0?"+":""}${r.net} pt${Math.abs(r.net)===1?"":"s"}</span>
-                     <small>L:${cat(r.low)} H:${cat(r.high)} G:${cat(r.grn)} B:${birdTag}${sweepTxt}</small>`;
-    res.classList.toggle("sweep", r.sweep!==-1);
-    hm.textContent = r.money===0?"$0":money(r.money); hm.className="money "+moneyClass(r.money);
-    rm.textContent = money(r.run); rm.className="money "+moneyClass(r.run);
+      const cell=document.getElementById(`sc-${i}-${p}`);
+      const dot =document.getElementById(`dot-${i}-${p}`);
+      const nv  =document.getElementById(`net-${i}-${p}`);
+      cell.classList.remove('stroke','stroke2','give');
+      if(st>0){ cell.classList.add(st>=2?'stroke2':'stroke'); dot.textContent='•'.repeat(Math.min(st,3)); }
+      else if(st<0){ cell.classList.add('give'); dot.textContent='+'.repeat(Math.min(-st,3)); }
+      else dot.textContent='';
+      const v=state.scores[i][p];
+      if(v==null){ nv.textContent=''; nv.className='netv'; }
+      else { const net=v-st; nv.textContent=net; nv.className='netv'+(net<h.par?' under':''); if(nine) pgO[p]+=v; else pgI[p]+=v; }
+    }
+
+    // greenie cell
+    const gv=state.greenie[i], gc=document.getElementById('gr-'+i);
+    gc.className='grn'+(gv===0?' g1':gv===1?' g2':''); gc.textContent= gv===0?'1':gv===1?'2':'–';
+
+    // points / hole money / running
+    const r=c.holes[i]; if(r.played) anyPlayed=true;
+    const ptc=document.getElementById('pt-'+i), hmc=document.getElementById('hm-'+i), rmc=document.getElementById('rm-'+i);
+    if(r.played){
+      ptc.textContent=(r.net>0?'+':'')+r.net; ptc.className='pt '+moneyClass(r.net)+(r.sweep!==-1?' sweep':'');
+      const bTag = r.bird===-1 ? ((r.aBird&&r.bBird)?'½':'·') : cat(r.bird);
+      ptc.title=`L:${cat(r.low)} H:${cat(r.high)} G:${cat(r.grn)} B:${bTag}${r.sweep!==-1?' — SWEEP ×2':''}`;
+      hmc.textContent= r.money===0?'$0':money(r.money); hmc.className='money '+moneyClass(r.money);
+      if(nine){ ptO+=r.net; hmO+=r.money; } else { ptI+=r.net; hmI+=r.money; }
+    } else {
+      ptc.textContent=''; ptc.className='pt'; ptc.removeAttribute('title'); hmc.textContent=''; hmc.className='';
+    }
+    rmc.textContent = anyPlayed ? money(r.run) : ''; rmc.className='money '+moneyClass(r.run);
   }
 
-  // OUT / IN / TOTAL rows
-  fillTurn("OUT",0,9,c); fillTurn("IN",9,18,c);
-  setTurnTotals(c);
+  // OUT / IN / TOTAL columns
+  setTxt('yds-out',ydO); setTxt('yds-in',ydI); setTxt('yds-tot',ydO+ydI);
+  setTxt('par-out',parO); setTxt('par-in',parI); setTxt('par-tot',parO+parI);
+  for(let p=0;p<4;p++){ setTxt(`pg-${p}-out`,pgO[p]||''); setTxt(`pg-${p}-in`,pgI[p]||''); setTxt(`pg-${p}-tot`,(pgO[p]+pgI[p])||''); }
+  setPts('pt-out',ptO); setPts('pt-in',ptI); setPts('pt-tot',ptO+ptI);
+  setMoney('hm-out',hmO); setMoney('hm-in',hmI); setMoney('hm-tot',hmO+hmI);
+  setMoney('rm-out', c.holes[8].run); setMoney('rm-in', c.run); setMoney('rm-tot', c.run);
 
-  // summary
   renderSummary(c);
   save();
-}
-function fillTurn(which,from,to,c){
-  let par=0,yds=0,g=[0,0,0,0];
-  for(let i=from;i<to;i++){ par+=state.course[i].par; yds+=(+state.course[i].yds||0);
-    state.scores[i].forEach((v,p)=>{ if(v!=null) g[p]+=v; }); }
-  document.getElementById(`${which}-par`).textContent=par;
-  document.getElementById(`${which}-yds`).textContent=yds;
-  [0,1,2,3].forEach(p=>document.getElementById(`${which}-${p}`).textContent=g[p]||"");
-  // running money at the turn
-  const idx = which==="OUT"?8:17;
-  const m=c.holes[idx].run;
-  const cell=document.getElementById(`${which}-tot`);
-  cell.textContent=money(m); cell.className=moneyClass(m);
-}
-function setTurnTotals(c){
-  document.getElementById("T-par").textContent=c.parOut+c.parIn;
-  document.getElementById("T-yds").textContent=c.yardOut+c.yardIn;
-  [0,1,2,3].forEach(p=>document.getElementById(`T-${p}`).textContent=c.pGross[p]||"");
-  const cell=document.getElementById("T-tot");
-  cell.textContent=money(c.run); cell.className=moneyClass(c.run);
 }
 
 function renderSummary(c){
   const t1=state.team1name, t2=state.team2name;
-  // live badge
   const badge=document.getElementById("liveStanding");
-  if(c.run===0){ badge.textContent="All square"; }
-  else{ const up=c.run>0?t1:t2; badge.textContent=`${up} up ${money(Math.abs(c.run))}`; }
+  if(c.run===0) badge.textContent="All square";
+  else badge.textContent=`${c.run>0?t1:t2} up ${money(Math.abs(c.run))}`;
 
-  // big standing card
   const sc=document.getElementById("standingCard");
   if(c.run===0){
     sc.innerHTML=`<div class="who">Current standing</div><div class="big zero">All square</div>
-                  <div class="who">${t1} &nbsp;•&nbsp; ${t2}</div>`;
+                  <div class="who">${escapeHtml(t1)} &nbsp;•&nbsp; ${escapeHtml(t2)}</div>`;
   }else{
-    const up=c.run>0?t1:t2, dn=c.run>0?t2:t1, amt=Math.abs(c.run);
+    const up=c.run>0?t1:t2, dn=c.run>0?t2:t1;
     sc.innerHTML=`<div class="who"><b>${escapeHtml(up)}</b> is up</div>
-                  <div class="big pos">${money(amt)}</div>
+                  <div class="big pos">${money(Math.abs(c.run))}</div>
                   <div class="who">${escapeHtml(dn)} owes ${escapeHtml(up)} · Points ${c.tPts[0]}–${c.tPts[1]}</div>`;
   }
 
-  // per-player / per-team table
   const rows = state.players.map((pl,i)=>{
-    const t=team(i)===0?t1:t2; const tag=team(i)===0?"t1":"t2";
+    const tag=team(i)===0?"t1":"t2", tn=team(i)===0?t1:t2;
     return `<tr><td style="text-align:left"><span class="teamtag ${tag}"></span>${escapeHtml(pl.name)}</td>
-      <td>${pl.hcp}</td><td>${c.pGross[i]||"—"}</td><td>${c.pNet[i]||"—"}</td><td style="text-align:left">${escapeHtml(t)}</td></tr>`;
+      <td>${pl.hcp}</td><td>${c.pGross[i]||"—"}</td><td>${c.pNet[i]||"—"}</td><td style="text-align:left">${escapeHtml(tn)}</td></tr>`;
   }).join("");
   document.getElementById("sumTable").innerHTML =
     `<thead><tr><th style="text-align:left">Player</th><th>Hcp</th><th>Gross</th><th>Net</th><th style="text-align:left">Team</th></tr></thead>
      <tbody>${rows}
-      <tr style="font-weight:800;background:#eef3ec">
+      <tr style="font-weight:800;background:var(--t1bg)">
         <td style="text-align:left">${escapeHtml(t1)} (net)</td><td></td><td>${c.tGross[0]||"—"}</td><td>${c.tNet[0]||"—"}</td><td>${c.tPts[0]} pts</td></tr>
-      <tr style="font-weight:800;background:#fdeeee">
+      <tr style="font-weight:800;background:var(--t2bg)">
         <td style="text-align:left">${escapeHtml(t2)} (net)</td><td></td><td>${c.tGross[1]||"—"}</td><td>${c.tNet[1]||"—"}</td><td>${c.tPts[1]} pts</td></tr>
      </tbody>`;
 }
 
-function escapeHtml(s){ return String(s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m])); }
-
 /* ---------- events ---------- */
 document.addEventListener("input", e=>{
   const t=e.target, d=t.dataset;
-  if(d.pname!=null){ state.players[+d.pname].name=t.value; renderHead(); renderSummary(calc()); save(); return; }
+  if(d.pname!=null){ state.players[+d.pname].name=t.value; renderSummary(calc()); save(); return; }
+  if(d.tname!=null){ const ti=+d.tname; if(ti===0)state.team1name=t.value; else state.team2name=t.value; renderSummary(calc()); save(); return; }
   if(d.phcp!=null){ state.players[+d.phcp].hcp=num(t.value)||0; recompute(); return; }
   if(d.score!=null){ const v=num(t.value); state.scores[+d.score][+d.pl]= (v==null||t.value==="")?null:v; recompute(); return; }
   if(d.par!=null){ state.course[+d.par].par=num(t.value)||0; recompute(); return; }
   if(d.si!=null){ state.course[+d.si].si=Math.max(1,Math.round(num(t.value)||1)); recompute(); return; }
   if(d.yds!=null){ state.course[+d.yds].yds=num(t.value)||0; recompute(); return; }
-  if(d.bet!=null){ state.bets[+d.bet]=num(t.value)||0; recompute(); return; }
-  if(d.greenie!=null){ state.greenie[+d.greenie]= t.value===""?null:(+t.value); recompute(); return; }
-  if(t.id==="team1name"){ state.team1name=t.value; renderSetup(); renderHead(); renderBody(); recompute(); return; }
-  if(t.id==="team2name"){ state.team2name=t.value; renderSetup(); renderHead(); renderBody(); recompute(); return; }
-  if(t.id==="defaultBet"){ const b=num(t.value)||0; state.defaultBet=b;
-      state.bets=state.bets.map(()=>b); renderBody(); recompute(); return; }
+  if(d.bet!=null){ const i=+d.bet, val=num(t.value)||0;     // press: stake carries to the end of the round
+      for(let j=i;j<18;j++) state.bets[j]=val;
+      document.querySelectorAll('input.bet').forEach(inp=>{ const k=+inp.dataset.bet; if(k>i) inp.value=val; });
+      recompute(); return; }
+  if(t.id==="defaultBet"){ const b=num(t.value)||0; state.defaultBet=b; state.bets=betSchedule(b);
+      refreshBetInputs(); recompute(); return; }
+});
+
+// greenie: tap a cell to cycle none → Team 1 → Team 2 → none
+document.addEventListener("click", e=>{
+  const cell=e.target.closest('[data-greenie]'); if(!cell) return;
+  const i=+cell.dataset.greenie;
+  state.greenie[i] = state.greenie[i]==null ? 0 : state.greenie[i]===0 ? 1 : null;
+  recompute();
 });
 
 document.getElementById("newRound").addEventListener("click",()=>{
-  if(!confirm("Start a new round? Scores and bets clear; players, teams and course stay.")) return;
+  if(!confirm("Start a new round? Scores, bets and greenies clear; players, teams and course stay.")) return;
   state.scores=Array.from({length:18},()=>[null,null,null,null]);
-  state.bets=Array(18).fill(num(state.defaultBet)||0);
+  state.bets=betSchedule(state.defaultBet);
   state.greenie=Array(18).fill(null);
-  renderBody(); recompute();
+  renderCard(); recompute();
 });
 document.getElementById("resetAll").addEventListener("click",()=>{
   if(!confirm("Reset everything to defaults? This clears players, scores and edits.")) return;
   state=defaultState(); renderAll();
 });
 
-function renderAll(){ renderSetup(); renderHead(); renderBody(); recompute(); }
+function renderAll(){
+  document.getElementById("defaultBet").value = state.defaultBet;
+  renderCard();
+  recompute();
+}
 renderAll();
 </script>
 </body>
