@@ -26,9 +26,9 @@
   .panel-head{background:#fafaf5;padding:10px 14px;font-weight:700;border-bottom:1px solid var(--line);
          font-size:14px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
   .panel-body{padding:14px}
-  .toolbar{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
-  .toolbar label{font-size:12px;color:var(--muted)}
-  .toolbar input{width:80px;padding:7px 8px;border:1px solid var(--line);border-radius:6px;text-align:center;font:inherit}
+  .toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+  .toolbar label{font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px}
+  .toolbar input{width:74px;padding:7px 8px;border:1px solid var(--line);border-radius:6px;text-align:center;font:inherit}
   .hint{font-size:12px;color:var(--muted);font-weight:400}
 
   /* ---------- scorecard grid ---------- */
@@ -41,7 +41,7 @@
   .sc th.sum,.sc td.sum{background:#eef3ea;font-weight:800;min-width:46px}
   .sc thead th.sum{background:var(--green-d)}
   /* sticky first column */
-  .sc .lbl{position:sticky;left:0;z-index:3;text-align:left;min-width:128px;max-width:128px;
+  .sc .lbl{position:sticky;left:0;z-index:3;text-align:left;min-width:150px;max-width:150px;
            padding:3px 8px;font-size:11px;font-weight:700;color:#333;text-transform:uppercase;letter-spacing:.4px;
            background:#f1ecdd;box-shadow:2px 0 4px rgba(0,0,0,.05)}
   .sc thead th.lbl{z-index:4;background:var(--green);color:#fff}
@@ -64,8 +64,13 @@
   .sc td.playerlbl{padding:2px 6px;background:#fff;text-transform:none;letter-spacing:0}
   .sc td.playerlbl.t1{border-left:5px solid var(--t1)} .sc td.playerlbl.t2{border-left:5px solid var(--t2)}
   .sc input.pname{width:100%;border:0;background:transparent;font-weight:700;font-size:13px;padding:1px 0;color:#222}
-  .sc .hcpline{font-size:10px;color:#888;display:flex;align-items:center;gap:4px;font-weight:600}
+  .sc .hcpline{font-size:10px;color:#888;display:flex;align-items:center;gap:3px;flex-wrap:wrap;font-weight:600}
   .sc input.phcp{width:38px;border:1px solid var(--line);border-radius:4px;text-align:center;font-size:11px;padding:1px 0}
+  .sc .playh{color:var(--green-l);font-weight:800;font-size:10px}
+  .sc .mini{border:1px solid var(--line);background:#fff;border-radius:4px;font-size:10px;font-weight:800;
+            padding:1px 5px;cursor:pointer;line-height:1.25}
+  .sc .mini:disabled{opacity:.3;cursor:default}
+  .sc .teamtog{color:#444;margin-left:auto} .sc .delp{color:var(--t2)}
   .sc td.scorecell{position:relative;height:40px;min-width:44px}
   .sc td.scorecell input.score{position:absolute;inset:0;width:100%;height:100%;border:0;background:transparent;
                  text-align:center;font-weight:700;font-size:16px;color:#1a1a1a}
@@ -79,7 +84,8 @@
   .sc .betrow td,.sc .grnrow td{height:32px;background:#fcfbf6}
   .sc input.cell.bet{font-size:12px}
   .sc td.betcell.autopress{box-shadow:inset 4px 0 0 var(--gold);background:#fdf7e3}
-  .sc td.grn{cursor:pointer;font-weight:800;font-size:12px;user-select:none;-webkit-user-select:none;color:#aaa}
+  .sc td.grn{cursor:pointer;font-weight:700;font-size:9.5px;line-height:1.05;user-select:none;-webkit-user-select:none;
+             color:#bbb;padding:1px 2px;word-break:break-word}
   .sc td.grn.g1{background:var(--t1bg);color:var(--t1)} .sc td.grn.g2{background:var(--t2bg);color:var(--t2)}
   .sc .resrow td{font-weight:700;font-variant-numeric:tabular-nums;font-size:12.5px}
   .sc .resrow.running td{background:#f4f1e6}
@@ -100,8 +106,8 @@
   .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
   button{font:inherit;font-weight:700;padding:9px 14px;border:1px solid var(--line);border-radius:8px;background:#fff;cursor:pointer}
   button.primary{background:var(--green);color:#fff;border-color:var(--green-d)}
-  button.warn{color:var(--t2)}
-  button:active{transform:translateY(1px)}
+  button.warn{color:var(--t2)} button:disabled{opacity:.4;cursor:default}
+  button:active:not(:disabled){transform:translateY(1px)}
   .rules-body{font-size:13px;line-height:1.55} .rules-body li{margin:4px 0}
   details.rules summary{cursor:pointer}
   footer{max-width:1200px;margin:0 auto;padding:8px 14px 30px;color:var(--muted);font-size:11.5px}
@@ -117,18 +123,21 @@
 <main>
   <!-- TOOLBAR -->
   <div class="panel">
-    <div class="panel-head">
+    <div class="panel-body">
       <div class="toolbar">
         <label>Base bet&nbsp; $<input id="defaultBet" type="number" min="0" step="1" inputmode="numeric" value="5"></label>
-        <span class="hint">per point · front-nine stake · back nine auto-presses to double · raise any hole to press from there on</span>
+        <button id="addPlayer">＋ Add player</button>
+        <span class="hint"><b id="pcount">4</b> players (2–6)</span>
       </div>
+      <div class="hint">$ per point · front-nine stake; from hole 10 the stake is the hole-9 value <b>+ $1</b> ·
+        raise any hole to press from there on · use <b>⇄</b> to switch a player’s team, <b>✕</b> to remove.</div>
     </div>
   </div>
 
   <!-- SCORECARD -->
   <div class="panel">
     <div class="panel-head">Scorecard
-      <span class="hint">Type names &amp; handicaps in the card · gold cells = a stroke given · tap a Greenie cell to award it</span>
+      <span class="hint">Names &amp; handicaps go in the card · gold cells = a stroke given · tap a Greenie cell to award it</span>
     </div>
     <div class="tablewrap">
       <table class="sc">
@@ -158,19 +167,20 @@
     <summary class="panel-head">How High-Low scoring works</summary>
     <div class="panel-body rules-body">
       <ul>
-        <li><b>Six points are in play on every hole:</b> Low (2) — lower <i>best</i> net · High (2) —
-            lower <i>worst</i> net · Greenie (1) — tap the <b>Greenie</b> row to award · Net birdie (1) —
-            a team’s best net is under par and the other’s isn’t.</li>
+        <li><b>Teams.</b> 2–6 players split into two teams. Each hole compares the teams’ best and worst
+            net scores, so team sizes can be uneven.</li>
+        <li><b>Six points per hole:</b> Low (2) — lower <i>best</i> net · High (2) — lower <i>worst</i> net ·
+            Greenie (1) — tap the <b>Greenie</b> row to award · Net birdie (1) — a team’s best net is under
+            par and the other’s isn’t.</li>
         <li><b>Sweep = ×2.</b> Win all six points outright and the hole doubles to <b>12</b> (shown gold).</li>
-        <li><b>Ties push</b> (no points). <b>Money</b> = (Team 1 − Team 2 points) × that hole’s bet;
-            <b>Running&nbsp;$</b> is from Team&nbsp;1’s perspective (positive = Team&nbsp;1 up).</li>
-        <li><b>Presses.</b> Raise the <b>Bet $</b> on any hole and that higher stake carries through the rest
-            of the round. There’s an <b>automatic press on hole 10</b> (gold edge): the back nine plays for
-            double the front-nine stake.</li>
-        <li><b>Strokes.</b> A <span style="background:var(--stroke);padding:0 4px;border-radius:3px">gold cell</span>
-            with a • dot means that player gets a stroke there (two dots = two strokes), allocated by the
-            <b>S.I.</b> (stroke index) row from each player’s handicap. The small grey number is the net score.</li>
-        <li>A hole only counts once all four scores are entered.</li>
+        <li><b>Net — low man plays off scratch.</b> The lowest handicap in the group plays off 0 and everyone
+            else gets the <i>difference</i> (a 5 and a 10 become 0 and 5). Those strokes fall on the hardest
+            holes by <b>S.I.</b>, shown as a <span style="background:var(--stroke);padding:0 4px;border-radius:3px">gold cell</span>
+            with • dots. The “→N” by a handicap is the strokes that player receives; the small grey number is the net score.</li>
+        <li><b>Presses.</b> Raise the <b>Bet $</b> on any hole and that higher stake carries to the end of the
+            round. <b>Automatic press on hole 10</b> (gold edge): from hole 10 the stake is the hole-9 value + $1.</li>
+        <li><b>Money</b> = (Team 1 − Team 2 points) × that hole’s bet; <b>Running&nbsp;$</b> is from Team&nbsp;1’s
+            perspective (positive = Team&nbsp;1 up). A hole counts once every player has a score.</li>
       </ul>
     </div>
   </details>
@@ -200,16 +210,16 @@ const DEFAULT_COURSE = [
   {par:3, si:18, yds:150}, {par:4, si:14, yds:358}, {par:5, si:6,  yds:495}
 ];
 
-/* Bet schedule: front nine plays the base stake, back nine auto-presses to double (hole 10). */
-function betSchedule(base){ base=parseFloat(base)||0; const a=[]; for(let i=0;i<18;i++) a.push(i>=9?base*2:base); return a; }
+/* Bet schedule: front nine at the base stake; from hole 10 the stake is the hole-9 value + 1. */
+function betSchedule(base){ base=parseFloat(base)||0; const a=[]; for(let i=0;i<18;i++) a.push(i>=9?base+1:base); return a; }
 
 function defaultState(){
   return {
     team1name:"Team 1", team2name:"Team 2",
     defaultBet:5,
     players:[
-      {name:"Player 1", hcp:0}, {name:"Player 2", hcp:0},
-      {name:"Player 3", hcp:0}, {name:"Player 4", hcp:0}
+      {name:"Player 1", hcp:0, team:0}, {name:"Player 2", hcp:0, team:0},
+      {name:"Player 3", hcp:0, team:1}, {name:"Player 4", hcp:0, team:1}
     ],
     course: DEFAULT_COURSE.map(h=>({...h})),
     bets:   betSchedule(5),
@@ -224,6 +234,9 @@ function load(){
     const s = JSON.parse(localStorage.getItem(STORAGE_KEY));
     if(s && s.players && s.course && s.scores){
       if(!Array.isArray(s.greenie)) s.greenie=Array(18).fill(null);
+      s.players.forEach((p,i)=>{ if(p.team==null) p.team = i < s.players.length/2 ? 0 : 1; });
+      const n=s.players.length;            // keep each hole's score row aligned with player count
+      s.scores = s.scores.map(row=>{ row=(row||[]).slice(0,n); while(row.length<n) row.push(null); return row; });
       return s;
     }
   }catch(e){}
@@ -231,44 +244,53 @@ function load(){
 }
 function save(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){} }
 
-const team  = p => p<2 ? 0 : 1;            // players 0,1 -> team1 ; 2,3 -> team2
+const team  = p => state.players[p].team;          // 0 = Team 1, 1 = Team 2
 const num   = v => { const n=parseFloat(v); return isFinite(n)?n:null; };
 const money = n => (n<0?"-$":"$") + Math.abs(n).toLocaleString();
 const cat   = s => s===0?"1" : s===1?"2" : "·";
 const moneyClass = n => n>0?"pos":n<0?"neg":"zero";
 function escapeHtml(s){ return String(s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m])); }
 
-/* strokes received on a hole given course handicap + stroke index (supports >18 and plus handicaps) */
-function strokesFor(hcp, si){
-  hcp = Math.round(num(hcp)||0);
-  if(hcp >= 0){
-    let s=0; for(let k=0;k<4;k++){ if(hcp >= si + 18*k) s++; } return s;
-  } else {                                   // plus handicap: give strokes back from the easiest holes
-    let s=0; const ph=-hcp, giveIdx=19-si; for(let k=0;k<4;k++){ if(ph >= giveIdx + 18*k) s--; } return s;
-  }
+/* Match-play handicaps: the lowest index plays off scratch; everyone else gets the difference
+   (a 5 and a 10 become 0 and 5). These are the strokes actually used for net scoring. */
+function playingHcaps(){
+  const hs=state.players.map(p=>Math.round(num(p.hcp)||0));
+  const lo=Math.min(...hs);
+  return hs.map(h=>h-lo);
 }
 
-/* core computation (unchanged scoring engine) */
+/* strokes received on a hole given a (non-negative) playing handicap + stroke index */
+function strokesFor(hcp, si){
+  hcp = Math.round(num(hcp)||0);
+  if(hcp >= 0){ let s=0; for(let k=0;k<4;k++){ if(hcp >= si + 18*k) s++; } return s; }
+  let s=0; const ph=-hcp, giveIdx=19-si; for(let k=0;k<4;k++){ if(ph >= giveIdx + 18*k) s--; } return s;
+}
+
+/* core computation (supports any team sizes) */
 function calc(){
   let run=0;
   const holes=[];
-  const pGross=[0,0,0,0], pNet=[0,0,0,0];
+  const n=state.players.length;
+  const pGross=Array(n).fill(0), pNet=Array(n).fill(0);
   const tGross=[0,0], tNet=[0,0], tPts=[0,0];
   let yardOut=0,yardIn=0,parOut=0,parIn=0;
+  const ph=playingHcaps();
 
   for(let i=0;i<18;i++){
     const h=state.course[i];
     (i<9? (parOut+=h.par, yardOut+=(+h.yds||0)) : (parIn+=h.par, yardIn+=(+h.yds||0)));
     const g=state.scores[i];
-    const nets=g.map((v,p)=> v==null?null : v - strokesFor(state.players[p].hcp, h.si));
+    const nets=g.map((v,p)=> v==null?null : v - strokesFor(ph[p], h.si));
     g.forEach((v,p)=>{ if(v!=null){ pGross[p]+=v; pNet[p]+=nets[p]; }});
 
-    const allIn = g.every(v=>v!=null);
+    const t0=[], t1=[];
+    for(let p=0;p<n;p++){ if(nets[p]!=null) (state.players[p].team===0?t0:t1).push(nets[p]); }
+    const played = g.every(v=>v!=null) && t0.length>0 && t1.length>0;
     let r={i, nets, played:false, run};
-    if(allIn){
-      const aLow=Math.min(nets[0],nets[1]),  bLow=Math.min(nets[2],nets[3]);
-      const aHigh=Math.max(nets[0],nets[1]), bHigh=Math.max(nets[2],nets[3]);
-      const low  = aLow<bLow ? 0 : aLow>bLow ? 1 : -1;     // 0 = Team 1, 1 = Team 2, -1 = push
+    if(played){
+      const aLow=Math.min(...t0), bLow=Math.min(...t1);
+      const aHigh=Math.max(...t0), bHigh=Math.max(...t1);
+      const low  = aLow<bLow ? 0 : aLow>bLow ? 1 : -1;
       const high = aHigh<bHigh? 0 : aHigh>bHigh? 1 : -1;
       const aBird=aLow<h.par, bBird=bLow<h.par;
       const bird = (aBird&&!bBird)?0 : (bBird&&!aBird)?1 : -1;
@@ -277,15 +299,15 @@ function calc(){
       let p1=(low===0?2:0)+(high===0?2:0)+(grn===0?1:0)+(bird===0?1:0);
       let p2=(low===1?2:0)+(high===1?2:0)+(grn===1?1:0)+(bird===1?1:0);
       const sweep = p1===6 ? 0 : p2===6 ? 1 : -1;
-      const t1 = sweep===0?12:p1, t2 = sweep===1?12:p2;
+      const t1pts = sweep===0?12:p1, t2pts = sweep===1?12:p2;
 
       const bet=num(state.bets[i])||0;
-      const net=t1-t2;
+      const net=t1pts-t2pts;
       const m=net*bet; run+=m;
-      tGross[0]+=g[0]+g[1]; tGross[1]+=g[2]+g[3];
-      tNet[0]+=nets[0]+nets[1]; tNet[1]+=nets[2]+nets[3];
-      tPts[0]+=t1; tPts[1]+=t2;
-      r={i, nets, played:true, low, high, grn, bird, aBird, bBird, t1, t2, net, sweep, bet, money:m, run};
+      for(let p=0;p<n;p++){ if(state.players[p].team===0) tGross[0]+=g[p]; else tGross[1]+=g[p]; }
+      tNet[0]+=t0.reduce((a,b)=>a+b,0); tNet[1]+=t1.reduce((a,b)=>a+b,0);
+      tPts[0]+=t1pts; tPts[1]+=t2pts;
+      r={i, nets, played:true, low, high, grn, bird, aBird, bBird, t1:t1pts, t2:t2pts, net, sweep, bet, money:m, run};
     }
     holes.push(r);
   }
@@ -318,9 +340,13 @@ function bandRow(ti){
 }
 function playerRow(p){
   const t=team(p)===0?'t1':'t2', pl=state.players[p];
+  const canDel = state.players.length>2 ? '' : ' disabled';
   let h=`<tr class="playerrow"><td class="lbl playerlbl ${t}">`+
     `<input class="pname" data-pname="${p}" value="${escapeHtml(pl.name)}" placeholder="Player ${p+1}">`+
-    `<div class="hcpline">Hcp <input class="phcp" data-phcp="${p}" type="number" inputmode="numeric" value="${pl.hcp}"></div></td>`;
+    `<div class="hcpline">Hcp <input class="phcp" data-phcp="${p}" type="number" inputmode="numeric" value="${pl.hcp}">`+
+    `<span class="playh" id="play-${p}"></span>`+
+    `<button class="mini teamtog" data-team="${p}" title="Switch team">⇄</button>`+
+    `<button class="mini delp" data-del="${p}" title="Remove player"${canDel}>✕</button></div></td>`;
   for(let i=0;i<18;i++){
     const v=state.scores[i][p];
     h+=`<td class="scorecell" id="sc-${i}-${p}"><span class="dots" id="dot-${i}-${p}"></span>`+
@@ -335,7 +361,7 @@ function betRow(){
   let h=`<tr class="betrow"><td class="lbl">Bet $</td>`;
   for(let i=0;i<18;i++){
     const cls = i===9 ? 'betcell autopress' : 'betcell';
-    const title = i===9 ? ' title="Auto-press: the back nine plays for double the front-nine stake"' : '';
+    const title = i===9 ? ' title="Auto-press: from hole 10 the stake is the hole-9 value + $1"' : '';
     h+=`<td class="${cls}"${title}><input class="cell bet" data-bet="${i}" type="number" inputmode="numeric" min="0" value="${state.bets[i]}"></td>`;
     if(i===8) h+='<td class="sum"></td>';
     if(i===17) h+='<td class="sum"></td><td class="sum"></td>';
@@ -362,12 +388,16 @@ function resRow(label, pre, cls){
 }
 function renderCard(){
   document.getElementById('cardHead').innerHTML = headHTML();
-  document.getElementById('cardBody').innerHTML =
-    metaRow('Yards','yds',true) + metaRow('Par','par',true) + metaRow('S.I.','si',false) +
-    bandRow(0) + playerRow(0) + playerRow(1) +
-    bandRow(1) + playerRow(2) + playerRow(3) +
-    betRow() + greenieRow() +
+  let body = metaRow('Yards','yds',true) + metaRow('Par','par',true) + metaRow('S.I.','si',false);
+  for(let t=0;t<2;t++){
+    body += bandRow(t);
+    state.players.forEach((pl,p)=>{ if(pl.team===t) body += playerRow(p); });
+  }
+  body += betRow() + greenieRow() +
     resRow('Points (T1)','pt','points') + resRow('Hole $','hm','holemoney') + resRow('Running $','rm','running');
+  document.getElementById('cardBody').innerHTML = body;
+  const pc=document.getElementById('pcount'); if(pc) pc.textContent=state.players.length;
+  const ap=document.getElementById('addPlayer'); if(ap) ap.disabled = state.players.length>=6;
 }
 
 /* ---------- fill computed cells (no input rebuild → focus preserved) ---------- */
@@ -378,19 +408,21 @@ function refreshBetInputs(){ document.querySelectorAll('input.bet').forEach(inp=
 
 function recompute(){
   const c=calc();
+  const n=state.players.length, ph=playingHcaps();
+  for(let p=0;p<n;p++) setTxt('play-'+p, '→'+ph[p]);
   let parO=0,parI=0,ydO=0,ydI=0, ptO=0,ptI=0, hmO=0,hmI=0, anyPlayed=false;
-  const pgO=[0,0,0,0], pgI=[0,0,0,0];
+  const pgO=Array(n).fill(0), pgI=Array(n).fill(0);
 
   for(let i=0;i<18;i++){
     const h=state.course[i], nine=i<9;
     if(nine){ parO+=h.par; ydO+=(+h.yds||0); } else { parI+=h.par; ydI+=(+h.yds||0); }
 
-    // player strokes / dots / nets
-    for(let p=0;p<4;p++){
-      const st=strokesFor(state.players[p].hcp,h.si);
+    for(let p=0;p<n;p++){
+      const st=strokesFor(ph[p],h.si);
       const cell=document.getElementById(`sc-${i}-${p}`);
       const dot =document.getElementById(`dot-${i}-${p}`);
       const nv  =document.getElementById(`net-${i}-${p}`);
+      if(!cell) continue;
       cell.classList.remove('stroke','stroke2','give');
       if(st>0){ cell.classList.add(st>=2?'stroke2':'stroke'); dot.textContent='•'.repeat(Math.min(st,3)); }
       else if(st<0){ cell.classList.add('give'); dot.textContent='+'.repeat(Math.min(-st,3)); }
@@ -400,11 +432,10 @@ function recompute(){
       else { const net=v-st; nv.textContent=net; nv.className='netv'+(net<h.par?' under':''); if(nine) pgO[p]+=v; else pgI[p]+=v; }
     }
 
-    // greenie cell
     const gv=state.greenie[i], gc=document.getElementById('gr-'+i);
-    gc.className='grn'+(gv===0?' g1':gv===1?' g2':''); gc.textContent= gv===0?'1':gv===1?'2':'–';
+    gc.className='grn'+(gv===0?' g1':gv===1?' g2':'');
+    gc.textContent = gv===0?state.team1name : gv===1?state.team2name : '–';
 
-    // points / hole money / running
     const r=c.holes[i]; if(r.played) anyPlayed=true;
     const ptc=document.getElementById('pt-'+i), hmc=document.getElementById('hm-'+i), rmc=document.getElementById('rm-'+i);
     if(r.played){
@@ -419,10 +450,9 @@ function recompute(){
     rmc.textContent = anyPlayed ? money(r.run) : ''; rmc.className='money '+moneyClass(r.run);
   }
 
-  // OUT / IN / TOTAL columns
   setTxt('yds-out',ydO); setTxt('yds-in',ydI); setTxt('yds-tot',ydO+ydI);
   setTxt('par-out',parO); setTxt('par-in',parI); setTxt('par-tot',parO+parI);
-  for(let p=0;p<4;p++){ setTxt(`pg-${p}-out`,pgO[p]||''); setTxt(`pg-${p}-in`,pgI[p]||''); setTxt(`pg-${p}-tot`,(pgO[p]+pgI[p])||''); }
+  for(let p=0;p<n;p++){ setTxt(`pg-${p}-out`,pgO[p]||''); setTxt(`pg-${p}-in`,pgI[p]||''); setTxt(`pg-${p}-tot`,(pgO[p]+pgI[p])||''); }
   setPts('pt-out',ptO); setPts('pt-in',ptI); setPts('pt-tot',ptO+ptI);
   setMoney('hm-out',hmO); setMoney('hm-in',hmI); setMoney('hm-tot',hmO+hmI);
   setMoney('rm-out', c.holes[8].run); setMoney('rm-in', c.run); setMoney('rm-tot', c.run);
@@ -463,11 +493,26 @@ function renderSummary(c){
      </tbody>`;
 }
 
+/* ---------- add / remove players ---------- */
+function addPlayer(){
+  if(state.players.length>=6) return;
+  const c0=state.players.filter(p=>p.team===0).length, c1=state.players.filter(p=>p.team===1).length;
+  state.players.push({name:"Player "+(state.players.length+1), hcp:0, team: c0<=c1?0:1});
+  state.scores.forEach(row=>row.push(null));
+  renderCard(); recompute();
+}
+function removePlayer(idx){
+  if(state.players.length<=2) return;
+  state.players.splice(idx,1);
+  state.scores.forEach(row=>row.splice(idx,1));
+  renderCard(); recompute();
+}
+
 /* ---------- events ---------- */
 document.addEventListener("input", e=>{
   const t=e.target, d=t.dataset;
   if(d.pname!=null){ state.players[+d.pname].name=t.value; renderSummary(calc()); save(); return; }
-  if(d.tname!=null){ const ti=+d.tname; if(ti===0)state.team1name=t.value; else state.team2name=t.value; renderSummary(calc()); save(); return; }
+  if(d.tname!=null){ const ti=+d.tname; if(ti===0)state.team1name=t.value; else state.team2name=t.value; recompute(); return; }
   if(d.phcp!=null){ state.players[+d.phcp].hcp=num(t.value)||0; recompute(); return; }
   if(d.score!=null){ const v=num(t.value); state.scores[+d.score][+d.pl]= (v==null||t.value==="")?null:v; recompute(); return; }
   if(d.par!=null){ state.course[+d.par].par=num(t.value)||0; recompute(); return; }
@@ -481,17 +526,19 @@ document.addEventListener("input", e=>{
       refreshBetInputs(); recompute(); return; }
 });
 
-// greenie: tap a cell to cycle none → Team 1 → Team 2 → none
 document.addEventListener("click", e=>{
-  const cell=e.target.closest('[data-greenie]'); if(!cell) return;
-  const i=+cell.dataset.greenie;
-  state.greenie[i] = state.greenie[i]==null ? 0 : state.greenie[i]===0 ? 1 : null;
-  recompute();
+  const g=e.target.closest('[data-greenie]');
+  if(g){ const i=+g.dataset.greenie; state.greenie[i]= state.greenie[i]==null?0 : state.greenie[i]===0?1 : null; recompute(); return; }
+  const tg=e.target.closest('[data-team]');
+  if(tg){ const p=+tg.dataset.team; state.players[p].team = state.players[p].team===0?1:0; renderCard(); recompute(); return; }
+  const del=e.target.closest('[data-del]');
+  if(del && !del.disabled){ removePlayer(+del.dataset.del); return; }
 });
 
+document.getElementById("addPlayer").addEventListener("click", addPlayer);
 document.getElementById("newRound").addEventListener("click",()=>{
   if(!confirm("Start a new round? Scores, bets and greenies clear; players, teams and course stay.")) return;
-  state.scores=Array.from({length:18},()=>[null,null,null,null]);
+  state.scores=Array.from({length:18},()=>Array(state.players.length).fill(null));
   state.bets=betSchedule(state.defaultBet);
   state.greenie=Array(18).fill(null);
   renderCard(); recompute();

@@ -7,10 +7,10 @@ Guidance for Claude Code (and other AI assistants) working in this repository.
 - **Name:** `card`
 - **Owner:** `mtnenergycorp-arch`
 - **What it is:** An interactive **High-Low golf betting scorecard** for
-  **Yellowstone Country Club** (Billings, Montana). It tracks four players on
-  two teams, applies each player's course handicap (net scoring by stroke
-  index), takes a per-hole money bet, and shows a running dollar total of who
-  is up and who is down.
+  **Yellowstone Country Club** (Billings, Montana). It tracks two to six players
+  on two teams, applies match-play net scoring (low handicap plays off scratch),
+  takes a per-hole money bet with presses, and shows a running dollar total of
+  who is up and who is down.
 
 ## Codebase structure
 
@@ -32,14 +32,20 @@ Everything lives in `index.html`:
   per-hole **Blue yardages are approximate** (not publicly retrievable) and are
   editable inline in the table.
 - **`betSchedule(base)`** — builds the per-hole bet array: front nine at the
-  base stake, back nine auto-pressed to **double** (the automatic press on
-  hole 10). Used by `defaultState`, the base-bet input, and "New round".
-- **`defaultState()` / `state`** — the full app state (players, handicaps, team
-  names, per-hole bets, scores, course data). Persisted to `localStorage`
-  under the key `yccHighLow_v1`.
-- **`strokesFor(hcp, si)`** — allocates handicap strokes to a hole by stroke
-  index. Supports course handicaps above 18 (multiple strokes) and plus
-  handicaps (strokes given back from the easiest holes).
+  base stake, back nine auto-pressed to the **hole-9 value + 1** (the automatic
+  press on hole 10). Used by `defaultState`, the base-bet input, and "New round".
+- **`defaultState()` / `state`** — the full app state (2–6 `players` each with
+  `{name, hcp, team}`, team names, per-hole bets, scores, course data). Persisted
+  to `localStorage` under the key `yccHighLow_v2`; `load()` migrates older saves
+  (adds `team`, aligns each score row to the player count).
+- **`playingHcaps()`** — converts course handicaps to match-play strokes: the
+  lowest index in the group plays off scratch and everyone else gets the
+  difference. `calc()` and `recompute()` use these (not raw handicaps) for nets
+  and stroke marks.
+- **`strokesFor(hcp, si)`** — allocates (non-negative) playing-handicap strokes
+  to a hole by stroke index. Supports handicaps above 18 (multiple strokes).
+- **`addPlayer()` / `removePlayer(idx)`** — grow/shrink the field (2–6), keeping
+  every hole's score row aligned; new players auto-balance to the smaller team.
 - **`calc()`** — the scoring engine. Computes net scores, the four point
   categories (low / high / greenie / net birdie), the sweep doubling, money
   won/lost, and the running total.
@@ -56,20 +62,25 @@ Everything lives in `index.html`:
 
 ## How the game is scored
 
-- **Teams:** players 1–2 = Team 1, players 3–4 = Team 2 (`team(p)` helper).
+- **Teams:** each player carries a `team` (0 = Team 1, 1 = Team 2); `team(p)`
+  reads it. 2–6 players, switchable in the card, so teams may be uneven — Low/High
+  use each team's best/worst net regardless of size.
+- **Net (low man off scratch):** the lowest handicap plays off 0; the others
+  receive the difference, allocated by stroke index (`playingHcaps`).
 - **Six points per hole:** **Low** (2 pts, lower *best* net), **High** (2 pts,
-  lower *worst* net), **Greenie** (1 pt, manually awarded in the `Grn` column),
-  and **Net birdie** (1 pt, best net under par, head-to-head). Ties push, an
-  unawarded greenie scores nothing.
+  lower *worst* net), **Greenie** (1 pt, manually awarded in the `Greenie` row,
+  which shows the team name), and **Net birdie** (1 pt, best net under par,
+  head-to-head). Ties push, an unawarded greenie scores nothing.
 - **Sweep:** if one team wins all six points outright, the hole doubles to
   **12** (`sweep` / `t1`/`t2` in `calc()`).
 - **Money:** (Team 1 points − Team 2 points) × that hole's bet. The running
   **Total** is from Team 1's perspective (positive = Team 1 is up).
 - **Presses:** raising a hole's bet cascades that stake forward to the end of
   the round (the `data-bet` handler writes `bets[i..17]`). The back nine
-  **auto-presses to double** the front-nine base (see `betSchedule`).
-- A hole only counts once all four scores are entered. Greenie is the only
-  manual input (a per-hole `state.greenie` value: `null`/`0`/`1`).
+  **auto-presses to the hole-9 value + 1** (see `betSchedule`).
+- A hole only counts once every player has a score (and both teams are
+  non-empty). Greenie is the only manual input (a per-hole `state.greenie`
+  value: `null`/`0`/`1`).
 
 ## Development workflow
 
