@@ -37,6 +37,18 @@
   .rrow .rhcp{width:58px;padding:7px 4px;border:1px solid var(--line);border-radius:6px;text-align:center;font:inherit}
   .rrow .rdel{border:1px solid var(--line);background:#fff;border-radius:6px;color:var(--t2);font-weight:800;cursor:pointer;padding:5px 9px}
   .rlbl{font-size:10px;color:var(--muted);font-weight:700}
+  /* WAD */
+  .wad-top{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+  .wad-pot{font-size:15px} .wad-pot b{font-size:26px;color:var(--green-l);font-variant-numeric:tabular-nums}
+  .wad-start{font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center}
+  .wadstart{padding:6px 12px} .wadstart.on{background:var(--green);color:#fff;border-color:var(--green-d)}
+  .wad-holder{font-size:13px}
+  .wad-rows{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
+  .wadrow{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:8px;padding:8px;background:#fcfcf9}
+  .wadrow.holder{border-color:var(--gold);box-shadow:inset 0 0 0 2px var(--gold);background:#fffdf2}
+  .wadname{font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .wadcount{font-size:12px;color:var(--muted);white-space:nowrap}
+  .wadbtn{background:var(--green);color:#fff;border-color:var(--green-d);font-weight:800;padding:7px 12px}
 
   /* ---------- scorecard grid ---------- */
   .tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
@@ -181,6 +193,30 @@
     </div>
   </div>
 
+  <!-- WAD -->
+  <details class="panel" id="wadPanel">
+    <summary class="panel-head">WAD — putting game
+      <span class="hint">make an 8′ putt to take the wad &amp; add $1 · last wad putt wins the pot</span>
+    </summary>
+    <div class="panel-body">
+      <div class="wad-top">
+        <div class="wad-pot">Pot <b id="wadPot">$5</b></div>
+        <div class="wad-start">Start
+          <button class="wadstart" data-wadstart="5">$5</button>
+          <button class="wadstart" data-wadstart="10">$10</button>
+        </div>
+        <div class="wad-holder" id="wadHolder"></div>
+      </div>
+      <div id="wadRows" class="wad-rows"></div>
+      <div class="btnrow">
+        <button id="wadUndo">↶ Undo last wad</button>
+        <button id="wadReset" class="warn">↺ Reset pot</button>
+      </div>
+      <p class="hint">Tap <b>Wad! 8′</b> when a player sinks an 8-foot putt: the pot grows $1 and they take the
+        wad. Whoever holds the wad at the end wins it all. (Players come from the scorecard lineup.)</p>
+    </div>
+  </details>
+
   <!-- RULES -->
   <details class="panel rules">
     <summary class="panel-head">How High-Low scoring works</summary>
@@ -250,7 +286,8 @@ function defaultState(){
     courseVersion: COURSE_VERSION,
     bets:   betSchedule(1),
     greenie:Array(18).fill(null),        // per hole: null = none, 0 = Team 1, 1 = Team 2
-    scores: Array.from({length:18},()=>[null,null,null,null])
+    scores: Array.from({length:18},()=>[null,null,null,null]),
+    wad: {start:5, log:[]}               // WAD putting game: pot start + chronological wad-putt log (player indices)
   };
 }
 
@@ -261,6 +298,7 @@ function load(){
     if(s && s.players && s.course && s.scores){
       if(!Array.isArray(s.greenie)) s.greenie=Array(18).fill(null);
       if(!Array.isArray(s.roster)) s.roster=defaultRoster();
+      if(!s.wad || !Array.isArray(s.wad.log)) s.wad={start:5, log:[]};
       if(s.courseVersion!==COURSE_VERSION){ s.course=DEFAULT_COURSE.map(h=>({...h})); s.courseVersion=COURSE_VERSION; }
       // adopt the $1 base / $2 back-nine default for rounds still on the old untouched $5 default
       const sched=(b,f)=>{const a=[];for(let i=0;i<18;i++)a.push(i>=9?f(b):b);return a;};
@@ -382,6 +420,25 @@ function renderRoster(){
        <button class="rdel" data-rdel="${ri}" title="Remove from roster">✕</button>
      </div>`).join('') || '<div class="hint">No saved players yet — add some below.</div>';
 }
+/* ---- WAD putting game ---- */
+function wadPot(){ return (num(state.wad.start)||0) + state.wad.log.length; }
+function wadCounts(){ const c=Array(state.players.length).fill(0); state.wad.log.forEach(i=>{ if(i<c.length) c[i]++; }); return c; }
+function wadHolder(){ for(let k=state.wad.log.length-1;k>=0;k--){ if(state.wad.log[k]<state.players.length) return state.wad.log[k]; } return -1; }
+function renderWad(){
+  const pot=wadPot(), holder=wadHolder(), counts=wadCounts();
+  document.getElementById('wadPot').textContent=money(pot);
+  document.querySelectorAll('.wadstart').forEach(b=>b.classList.toggle('on', +b.dataset.wadstart===state.wad.start));
+  document.getElementById('wadHolder').innerHTML = holder<0
+    ? '<span class="hint">No wad yet — nobody has made an 8′ putt.</span>'
+    : `🏆 <b>${escapeHtml(state.players[holder].name||('Player '+(holder+1)))}</b> has the wad — wins ${money(pot)} if it ends now`;
+  document.getElementById('wadRows').innerHTML = state.players.map((pl,p)=>
+    `<div class="wadrow${p===holder?' holder':''}">
+       <span class="wadname">${escapeHtml(pl.name)||('Player '+(p+1))}</span>
+       <span class="wadcount">${counts[p]} wad${counts[p]===1?'':'s'}</span>
+       <button class="wadbtn" data-wad="${p}">Wad! 8′</button>
+     </div>`).join('');
+}
+
 function pickOptions(){
   return '<option value="">⛳ pick name…</option>' +
     state.roster.map((r,ri)=>`<option value="${ri}">${escapeHtml(r.name)}${r.hcp!=null?` (${r.hcp})`:''}</option>`).join('');
@@ -507,6 +564,7 @@ function recompute(){
   setMoney('rm-out', c.holes[8].run); setMoney('rm-in', c.run); setMoney('rm-tot', c.run);
 
   renderSummary(c);
+  renderWad();
   save();
 }
 
@@ -554,7 +612,8 @@ function removePlayer(idx){
   if(state.players.length<=2) return;
   state.players.splice(idx,1);
   state.scores.forEach(row=>row.splice(idx,1));
-  renderCard(); recompute();
+  state.wad.log = state.wad.log.filter(i=>i!==idx).map(i=>i>idx?i-1:i);  // keep wad log aligned
+  renderCard(); renderWad(); recompute();
 }
 
 /* ---------- events ---------- */
@@ -600,6 +659,15 @@ document.addEventListener("click", e=>{
   if(del && !del.disabled){ removePlayer(+del.dataset.del); return; }
   const rd=e.target.closest('[data-rdel]');
   if(rd){ state.roster.splice(+rd.dataset.rdel,1); renderRoster(); renderCard(); recompute(); return; }
+  const ws=e.target.closest('[data-wadstart]');
+  if(ws){ state.wad.start=+ws.dataset.wadstart; renderWad(); save(); return; }
+  const wb=e.target.closest('[data-wad]');
+  if(wb){ state.wad.log.push(+wb.dataset.wad); renderWad(); save(); return; }
+});
+
+document.getElementById("wadUndo").addEventListener("click",()=>{ state.wad.log.pop(); renderWad(); save(); });
+document.getElementById("wadReset").addEventListener("click",()=>{
+  if(!confirm("Reset the WAD pot and clear all wads?")) return; state.wad.log=[]; renderWad(); save();
 });
 
 document.getElementById("addRoster").addEventListener("click",()=>{
@@ -611,7 +679,8 @@ document.getElementById("newRound").addEventListener("click",()=>{
   state.scores=Array.from({length:18},()=>Array(state.players.length).fill(null));
   state.bets=betSchedule(state.defaultBet);
   state.greenie=Array(18).fill(null);
-  renderCard(); recompute();
+  state.wad.log=[];
+  renderCard(); renderWad(); recompute();
 });
 document.getElementById("resetAll").addEventListener("click",()=>{
   if(!confirm("Reset everything to defaults? This clears players, scores and edits (saved handicaps are kept).")) return;
@@ -622,6 +691,7 @@ function renderAll(){
   document.getElementById("defaultBet").value = state.defaultBet;
   renderRoster();
   renderCard();
+  renderWad();
   recompute();
 }
 renderAll();

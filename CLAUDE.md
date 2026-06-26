@@ -10,7 +10,8 @@ Guidance for Claude Code (and other AI assistants) working in this repository.
   **Yellowstone Country Club** (Billings, Montana). It tracks two to six players
   on two teams, applies match-play net scoring (low handicap plays off scratch),
   takes a per-hole money bet with presses, and shows a running dollar total of
-  who is up and who is down.
+  who is up and who is down. It also includes **WAD**, a separate individual
+  putting side-game.
 
 ## Codebase structure
 
@@ -68,6 +69,14 @@ Everything lives in `index.html`:
   focus. A single delegated `input` listener keyed off `data-*` drives edits;
   player/team **name** edits update state + summary only (no rebuild) to keep
   the focused field alive.
+
+- **WAD (`state.wad`, `renderWad()`)** — a separate individual putting game:
+  the pot starts at **$5 or $10** and grows **$1 per 8′ "wad" putt**.
+  `wad.log` is the chronological list of player indices who made a wad; the pot
+  is `start + log.length`, the holder is the last valid entry, and that holder
+  wins the pot. Controls: `data-wad` (record a putt), `data-wadstart`, and
+  undo/reset buttons. The log is realigned in `removePlayer` and cleared on
+  "New round".
 
 ## How the game is scored
 

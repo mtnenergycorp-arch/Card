@@ -38,6 +38,15 @@ automatically on the device.
   yardage from the club's published men's Blue rating (31-Mar-2026). Edit any
   Yards / Par / S.I. cell if it ever changes.
 
+## WAD (side putting game)
+
+A separate, individual game tracked in its own panel. The pot **starts at $5 or
+$10** and grows **$1 every time someone sinks an 8-foot putt** — that player
+"takes the wad." Whoever holds the wad at the end (the **last** person to make a
+wad putt) **wins the pot**. Tap **Wad! 8′** next to whoever holed it; the
+current holder is highlighted, and there's **undo** and **reset**. Players come
+from the scorecard lineup.
+
 ## How High-Low works
 
 Six points are in play on every hole:
