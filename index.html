@@ -637,6 +637,16 @@ function removePlayer(idx){
 }
 
 /* ---------- events ---------- */
+// move the cursor to the next player's score box for this hole (then on to the next hole)
+let advTimer=null;
+function advanceScore(hole, pl){
+  const inputs=Array.from(document.querySelectorAll('input.score[data-score="'+hole+'"]'));
+  const cur=inputs.findIndex(inp=>+inp.dataset.pl===pl);
+  const next = (cur>=0 && cur<inputs.length-1) ? inputs[cur+1]
+             : (hole<17 ? document.querySelector('input.score[data-score="'+(hole+1)+'"]') : null);
+  if(next){ next.focus(); try{ next.select(); }catch(e){} }
+}
+
 document.addEventListener("input", e=>{
   const t=e.target, d=t.dataset;
   if(d.pname!=null){ state.players[+d.pname].name=t.value; renderSummary(calc()); save(); return; }
@@ -650,7 +660,14 @@ document.addEventListener("input", e=>{
       const nm=state.players[p].name.trim().toLowerCase();
       const rm=state.roster.find(r=>r.name.trim().toLowerCase()===nm); if(rm) rm.hcp=v;   // remember this Cane's index
       recompute(); return; }
-  if(d.score!=null){ const v=num(t.value); state.scores[+d.score][+d.pl]= (v==null||t.value==="")?null:v; recompute(); return; }
+  if(d.score!=null){ const hole=+d.score, pl=+d.pl, raw=t.value, v=num(raw);
+      state.scores[hole][pl]= (v==null||raw==="")?null:v; recompute();
+      clearTimeout(advTimer);                                  // auto-advance to the next player
+      if(raw!==""){
+        if(raw.length>=2 || (raw.length===1 && raw!=="1")) advanceScore(hole,pl);   // 2–9 (or 2-digit): jump now
+        else advTimer=setTimeout(()=>advanceScore(hole,pl),450);                     // leading "1" may become 10–12
+      }
+      return; }
   if(d.par!=null){ state.course[+d.par].par=num(t.value)||0; recompute(); return; }
   if(d.si!=null){ state.course[+d.si].si=Math.max(1,Math.round(num(t.value)||1)); recompute(); return; }
   if(d.yds!=null){ state.course[+d.yds].yds=num(t.value)||0; recompute(); return; }

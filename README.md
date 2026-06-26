@@ -15,6 +15,8 @@ automatically on the device.
 - **2–6 players, two teams.** Add or remove players (✕), switch anyone's team
   (⇄), and rename teams. Holes run across the top in the classic scorecard grid
   with OUT / IN / TOT columns; players sit down the left under the team bands.
+  Entering a score **auto-advances** to the next player on that hole (then to the
+  next hole), so you can rattle through scores without tapping each box.
 - **Saved roster ("the Canes").** Open the **Roster** panel to set each player's
   name and handicap index once (Cody, Chris, Darrin, Pat, Bryan come pre-listed;
   add your own too). Then quick-pick a name from the dropdown in any player slot

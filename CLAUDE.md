@@ -69,6 +69,9 @@ Everything lives in `index.html`:
   focus. A single delegated `input` listener keyed off `data-*` drives edits;
   player/team **name** edits update state + summary only (no rebuild) to keep
   the focused field alive.
+- **`advanceScore(hole, pl)`** — after a score is typed, moves the cursor to the
+  next player's box on that hole (then to the next hole). Digits 2–9 advance
+  immediately; a leading "1" waits ~450ms (via `advTimer`) so 10–12 can be typed.
 
 - **WAD (`state.wad`, `renderWad()`)** — a separate individual putting game:
   the pot starts at **$5 or $10** and grows **$1 per 8′ "wad" putt**.
