@@ -43,9 +43,11 @@ automatically on the device.
 A separate, individual game tracked in its own panel. The pot **starts at $5 or
 $10** and grows **$1 every time someone sinks an 8-foot putt** — that player
 "takes the wad." Whoever holds the wad at the end (the **last** person to make a
-wad putt) **wins the pot**. Tap **Wad! 8′** next to whoever holed it; the
-current holder is highlighted, and there's **undo** and **reset**. Players come
-from the scorecard lineup.
+wad putt) **wins the pot**. Pick the **Hole**, then tap **Wad! 8′** next to
+whoever holed it — the hole is logged, so you can see **which hole each person
+wadded on** (e.g. "Cody — 2 wads · H3, H12") plus the full order. The current
+holder is highlighted, and there's **undo** and **reset**. Players come from the
+scorecard lineup.
 
 ## How High-Low works
 

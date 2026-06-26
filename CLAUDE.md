@@ -72,11 +72,13 @@ Everything lives in `index.html`:
 
 - **WAD (`state.wad`, `renderWad()`)** — a separate individual putting game:
   the pot starts at **$5 or $10** and grows **$1 per 8′ "wad" putt**.
-  `wad.log` is the chronological list of player indices who made a wad; the pot
-  is `start + log.length`, the holder is the last valid entry, and that holder
-  wins the pot. Controls: `data-wad` (record a putt), `data-wadstart`, and
-  undo/reset buttons. The log is realigned in `removePlayer` and cleared on
-  "New round".
+  `wad.log` is the chronological list of `{p, hole}` entries (player index +
+  the hole it happened on, set via the `#wadHole` picker / `state.wad.hole`);
+  the pot is `start + log.length`, the holder is the last valid entry, and that
+  holder wins the pot. Each player's wad holes and the full order are displayed.
+  Controls: `data-wad` (record a putt on the current hole), `data-wadstart`,
+  `#wadHole`, and undo/reset buttons. The log is realigned in `removePlayer`
+  and cleared on "New round".
 
 ## How the game is scored
 
