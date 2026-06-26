@@ -64,6 +64,7 @@
   .sc td.playerlbl{padding:2px 6px;background:#fff;text-transform:none;letter-spacing:0}
   .sc td.playerlbl.t1{border-left:5px solid var(--t1)} .sc td.playerlbl.t2{border-left:5px solid var(--t2)}
   .sc input.pname{width:100%;border:0;background:transparent;font-weight:700;font-size:13px;padding:1px 0;color:#222}
+  .sc select.pick{width:100%;margin:1px 0 2px;border:1px solid var(--line);border-radius:4px;font-size:11px;padding:2px;background:#fff;color:#555}
   .sc .hcpline{font-size:10px;color:#888;display:flex;align-items:center;gap:3px;flex-wrap:wrap;font-weight:600}
   .sc input.phcp{width:38px;border:1px solid var(--line);border-radius:4px;text-align:center;font-size:11px;padding:1px 0}
   .sc .playh{color:var(--green-l);font-weight:800;font-size:10px}
@@ -125,7 +126,7 @@
   <div class="panel">
     <div class="panel-body">
       <div class="toolbar">
-        <label>Base bet&nbsp; $<input id="defaultBet" type="number" min="0" step="1" inputmode="numeric" value="5"></label>
+        <label>Base bet&nbsp; $<input id="defaultBet" type="number" min="0" step="1" inputmode="numeric" value="1"></label>
         <button id="addPlayer">＋ Add player</button>
         <span class="hint"><b id="pcount">4</b> players (2–6)</span>
       </div>
@@ -178,7 +179,8 @@
             holes by <b>S.I.</b>, shown as a <span style="background:var(--stroke);padding:0 4px;border-radius:3px">gold cell</span>
             with • dots. The “→N” by a handicap is the strokes that player receives; the small grey number is the net score.</li>
         <li><b>Presses.</b> Raise the <b>Bet $</b> on any hole and that higher stake carries to the end of the
-            round. <b>Automatic press on hole 10</b> (gold edge): from hole 10 the stake is the hole-9 value + $1.</li>
+            round. <b>Automatic press on hole 10</b> (gold edge): from hole 10 the stake is the hole-9 value + $1
+            (the back nine is always worth at least $2 per point).</li>
         <li><b>Money</b> = (Team 1 − Team 2 points) × that hole’s bet; <b>Running&nbsp;$</b> is from Team&nbsp;1’s
             perspective (positive = Team&nbsp;1 up). A hole counts once every player has a score.</li>
       </ul>
@@ -209,20 +211,26 @@ const DEFAULT_COURSE = [
   {par:5, si:14, yds:523}, {par:3, si:8,  yds:200}, {par:4, si:6,  yds:420}
 ];
 
-/* Bet schedule: front nine at the base stake; from hole 10 the stake is the hole-9 value + 1. */
-function betSchedule(base){ base=parseFloat(base)||0; const a=[]; for(let i=0;i<18;i++) a.push(i>=9?base+1:base); return a; }
+/* Bet schedule: front nine at the base stake; from hole 10 the stake is the hole-9 value + 1
+   (with a floor of 2 — the back nine is always worth at least $2 per point). */
+function betSchedule(base){ base=parseFloat(base)||0; const a=[]; for(let i=0;i<18;i++) a.push(i>=9?Math.max(base+1,2):base); return a; }
+
+/* Saved roster ("the Canes"). Each player's handicap is remembered between rounds:
+   set it once and picking that name later auto-fills it. */
+function defaultRoster(){ return ['Cody','Chris','Darrin','Pat','Bryan'].map(name=>({name, hcp:null})); }
 
 function defaultState(){
   return {
     team1name:"Team 1", team2name:"Team 2",
-    defaultBet:5,
+    defaultBet:1,
     players:[
       {name:"Player 1", hcp:0, team:0}, {name:"Player 2", hcp:0, team:0},
       {name:"Player 3", hcp:0, team:1}, {name:"Player 4", hcp:0, team:1}
     ],
+    roster: defaultRoster(),
     course: DEFAULT_COURSE.map(h=>({...h})),
     courseVersion: COURSE_VERSION,
-    bets:   betSchedule(5),
+    bets:   betSchedule(1),
     greenie:Array(18).fill(null),        // per hole: null = none, 0 = Team 1, 1 = Team 2
     scores: Array.from({length:18},()=>[null,null,null,null])
   };
@@ -234,7 +242,14 @@ function load(){
     const s = JSON.parse(localStorage.getItem(STORAGE_KEY));
     if(s && s.players && s.course && s.scores){
       if(!Array.isArray(s.greenie)) s.greenie=Array(18).fill(null);
+      if(!Array.isArray(s.roster)) s.roster=defaultRoster();
       if(s.courseVersion!==COURSE_VERSION){ s.course=DEFAULT_COURSE.map(h=>({...h})); s.courseVersion=COURSE_VERSION; }
+      // adopt the $1 base / $2 back-nine default for rounds still on the old untouched $5 default
+      const sched=(b,f)=>{const a=[];for(let i=0;i<18;i++)a.push(i>=9?f(b):b);return a;};
+      if(s.defaultBet===5 && (JSON.stringify(s.bets)===JSON.stringify(sched(5,b=>b*2)) ||
+                              JSON.stringify(s.bets)===JSON.stringify(sched(5,b=>b+1)))){
+        s.defaultBet=1; s.bets=betSchedule(1);
+      }
       s.players.forEach((p,i)=>{ if(p.team==null) p.team = i < s.players.length/2 ? 0 : 1; });
       const n=s.players.length;            // keep each hole's score row aligned with player count
       s.scores = s.scores.map(row=>{ row=(row||[]).slice(0,n); while(row.length<n) row.push(null); return row; });
@@ -339,11 +354,16 @@ function bandRow(ti){
     `<input class="tname" data-tname="${ti}" value="${escapeHtml(name)}" placeholder="Team ${ti+1}"></td>`+
     `<td class="band ${t}" colspan="21"></td></tr>`;
 }
+function pickOptions(){
+  return '<option value="">⛳ pick name…</option>' +
+    state.roster.map((r,ri)=>`<option value="${ri}">${escapeHtml(r.name)}${r.hcp!=null?` (${r.hcp})`:''}</option>`).join('');
+}
 function playerRow(p){
   const t=team(p)===0?'t1':'t2', pl=state.players[p];
   const canDel = state.players.length>2 ? '' : ' disabled';
   let h=`<tr class="playerrow"><td class="lbl playerlbl ${t}">`+
     `<input class="pname" data-pname="${p}" value="${escapeHtml(pl.name)}" placeholder="Player ${p+1}">`+
+    `<select class="pick" data-pick="${p}">${pickOptions()}</select>`+
     `<div class="hcpline">Hcp <input class="phcp" data-phcp="${p}" type="number" inputmode="numeric" value="${pl.hcp}">`+
     `<span class="playh" id="play-${p}"></span>`+
     `<button class="mini teamtog" data-team="${p}" title="Switch team">⇄</button>`+
@@ -514,7 +534,10 @@ document.addEventListener("input", e=>{
   const t=e.target, d=t.dataset;
   if(d.pname!=null){ state.players[+d.pname].name=t.value; renderSummary(calc()); save(); return; }
   if(d.tname!=null){ const ti=+d.tname; if(ti===0)state.team1name=t.value; else state.team2name=t.value; recompute(); return; }
-  if(d.phcp!=null){ state.players[+d.phcp].hcp=num(t.value)||0; recompute(); return; }
+  if(d.phcp!=null){ const p=+d.phcp, v=num(t.value)||0; state.players[p].hcp=v;
+      const nm=state.players[p].name.trim().toLowerCase();
+      const rm=state.roster.find(r=>r.name.trim().toLowerCase()===nm); if(rm) rm.hcp=v;   // remember this Cane's index
+      recompute(); return; }
   if(d.score!=null){ const v=num(t.value); state.scores[+d.score][+d.pl]= (v==null||t.value==="")?null:v; recompute(); return; }
   if(d.par!=null){ state.course[+d.par].par=num(t.value)||0; recompute(); return; }
   if(d.si!=null){ state.course[+d.si].si=Math.max(1,Math.round(num(t.value)||1)); recompute(); return; }
@@ -525,6 +548,14 @@ document.addEventListener("input", e=>{
       recompute(); return; }
   if(t.id==="defaultBet"){ const b=num(t.value)||0; state.defaultBet=b; state.bets=betSchedule(b);
       refreshBetInputs(); recompute(); return; }
+});
+
+document.addEventListener("change", e=>{
+  const d=e.target.dataset;
+  if(d.pick!=null){ const ri=e.target.value; if(ri==="") return;
+    const p=+d.pick, r=state.roster[+ri];
+    state.players[p].name=r.name; if(r.hcp!=null) state.players[p].hcp=r.hcp;
+    renderCard(); recompute(); }
 });
 
 document.addEventListener("click", e=>{
@@ -545,8 +576,8 @@ document.getElementById("newRound").addEventListener("click",()=>{
   renderCard(); recompute();
 });
 document.getElementById("resetAll").addEventListener("click",()=>{
-  if(!confirm("Reset everything to defaults? This clears players, scores and edits.")) return;
-  state=defaultState(); renderAll();
+  if(!confirm("Reset everything to defaults? This clears players, scores and edits (saved handicaps are kept).")) return;
+  const keepRoster=state.roster; state=defaultState(); state.roster=keepRoster; renderAll();
 });
 
 function renderAll(){

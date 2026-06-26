@@ -32,7 +32,14 @@ Everything lives in `index.html`:
   these change so `load()` refreshes the course on already-saved rounds.
 - **`betSchedule(base)`** — builds the per-hole bet array: front nine at the
   base stake, back nine auto-pressed to the **hole-9 value + 1** (the automatic
-  press on hole 10). Used by `defaultState`, the base-bet input, and "New round".
+  press on hole 10), floored at **$2**. Default base stake is **$1**. Used by
+  `defaultState`, the base-bet input, and "New round".
+- **`defaultRoster()` / `state.roster`** — the saved “Canes” roster (Cody,
+  Chris, Darrin, Pat, Bryan). Each player slot has a quick-pick `<select>`
+  (`data-pick`, handled by a `change` listener); picking a name fills it plus
+  the remembered handicap. Editing a handicap writes it back to the matching
+  roster entry (by name), so it persists across rounds and survives "Reset
+  everything".
 - **`defaultState()` / `state`** — the full app state (2–6 `players` each with
   `{name, hcp, team}`, team names, per-hole bets, scores, course data). Persisted
   to `localStorage` under the key `yccHighLow_v2`; `load()` migrates older saves
