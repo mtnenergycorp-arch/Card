@@ -34,12 +34,14 @@ Everything lives in `index.html`:
   base stake, back nine auto-pressed to the **hole-9 value + 1** (the automatic
   press on hole 10), floored at **$2**. Default base stake is **$1**. Used by
   `defaultState`, the base-bet input, and "New round".
-- **`defaultRoster()` / `state.roster`** — the saved “Canes” roster (Cody,
-  Chris, Darrin, Pat, Bryan). Each player slot has a quick-pick `<select>`
-  (`data-pick`, handled by a `change` listener); picking a name fills it plus
-  the remembered handicap. Editing a handicap writes it back to the matching
-  roster entry (by name), so it persists across rounds and survives "Reset
-  everything".
+- **`defaultRoster()` / `state.roster` / `renderRoster()`** — the saved “Canes”
+  roster (Cody, Chris, Darrin, Pat, Bryan), each `{name, hcp}`. A collapsible
+  **Roster panel** (`#rosterEditor`) edits names/indexes directly
+  (`data-rname` / `data-rhcp` / `data-rdel`, `＋ Add player to roster`);
+  changing an index live-updates any matching player in the lineup. Each player
+  slot also has a quick-pick `<select>` (`data-pick`, `change` listener) that
+  fills the name + remembered index. The roster persists across rounds and
+  survives "Reset everything".
 - **`defaultState()` / `state`** — the full app state (2–6 `players` each with
   `{name, hcp, team}`, team names, per-hole bets, scores, course data). Persisted
   to `localStorage` under the key `yccHighLow_v2`; `load()` migrates older saves

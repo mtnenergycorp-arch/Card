@@ -15,9 +15,11 @@ automatically on the device.
 - **2–6 players, two teams.** Add or remove players (✕), switch anyone's team
   (⇄), and rename teams. Holes run across the top in the classic scorecard grid
   with OUT / IN / TOT columns; players sit down the left under the team bands.
-- **Saved roster ("the Canes").** Quick-pick Cody, Chris, Darrin, Pat or Bryan
-  from a dropdown in each player slot. The app remembers each guy's handicap —
-  set it once and it auto-fills (and the dropdown shows it, e.g. "Cody (8)").
+- **Saved roster ("the Canes").** Open the **Roster** panel to set each player's
+  name and handicap index once (Cody, Chris, Darrin, Pat, Bryan come pre-listed;
+  add your own too). Then quick-pick a name from the dropdown in any player slot
+  and it pulls in their index automatically (the dropdown even shows it, e.g.
+  "Cody (8)"). The roster is remembered across rounds.
 - **Net scoring — low man plays off scratch.** The lowest handicap in the group
   plays off 0 and everyone else gets the difference (a 5 and a 10 become 0 and
   5). Those strokes land on the hardest holes by stroke index — shown as gold

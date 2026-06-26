@@ -30,6 +30,13 @@
   .toolbar label{font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px}
   .toolbar input{width:74px;padding:7px 8px;border:1px solid var(--line);border-radius:6px;text-align:center;font:inherit}
   .hint{font-size:12px;color:var(--muted);font-weight:400}
+  /* roster editor */
+  .roster-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px}
+  .rrow{display:flex;gap:6px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:#fcfcf9}
+  .rrow .rname{flex:1;min-width:0;padding:7px 8px;border:1px solid var(--line);border-radius:6px;font:inherit}
+  .rrow .rhcp{width:58px;padding:7px 4px;border:1px solid var(--line);border-radius:6px;text-align:center;font:inherit}
+  .rrow .rdel{border:1px solid var(--line);background:#fff;border-radius:6px;color:var(--t2);font-weight:800;cursor:pointer;padding:5px 9px}
+  .rlbl{font-size:10px;color:var(--muted);font-weight:700}
 
   /* ---------- scorecard grid ---------- */
   .tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
@@ -134,6 +141,17 @@
         raise any hole to press from there on · use <b>⇄</b> to switch a player’s team, <b>✕</b> to remove.</div>
     </div>
   </div>
+
+  <!-- ROSTER -->
+  <details class="panel" id="rosterPanel">
+    <summary class="panel-head">Roster &amp; handicap indexes
+      <span class="hint">set each player’s index once — picking their name on a team fills it in</span>
+    </summary>
+    <div class="panel-body">
+      <div id="rosterEditor" class="roster-grid"></div>
+      <div class="btnrow"><button id="addRoster">＋ Add player to roster</button></div>
+    </div>
+  </details>
 
   <!-- SCORECARD -->
   <div class="panel">
@@ -354,6 +372,16 @@ function bandRow(ti){
     `<input class="tname" data-tname="${ti}" value="${escapeHtml(name)}" placeholder="Team ${ti+1}"></td>`+
     `<td class="band ${t}" colspan="21"></td></tr>`;
 }
+function renderRoster(){
+  const wrap=document.getElementById('rosterEditor');
+  wrap.innerHTML = state.roster.map((r,ri)=>
+    `<div class="rrow">
+       <input class="rname" data-rname="${ri}" value="${escapeHtml(r.name)}" placeholder="Name">
+       <span class="rlbl">idx</span>
+       <input class="rhcp" data-rhcp="${ri}" type="number" inputmode="numeric" value="${r.hcp==null?'':r.hcp}" placeholder="—">
+       <button class="rdel" data-rdel="${ri}" title="Remove from roster">✕</button>
+     </div>`).join('') || '<div class="hint">No saved players yet — add some below.</div>';
+}
 function pickOptions(){
   return '<option value="">⛳ pick name…</option>' +
     state.roster.map((r,ri)=>`<option value="${ri}">${escapeHtml(r.name)}${r.hcp!=null?` (${r.hcp})`:''}</option>`).join('');
@@ -534,6 +562,11 @@ document.addEventListener("input", e=>{
   const t=e.target, d=t.dataset;
   if(d.pname!=null){ state.players[+d.pname].name=t.value; renderSummary(calc()); save(); return; }
   if(d.tname!=null){ const ti=+d.tname; if(ti===0)state.team1name=t.value; else state.team2name=t.value; recompute(); return; }
+  if(d.rname!=null){ state.roster[+d.rname].name=t.value; renderCard(); recompute(); return; }
+  if(d.rhcp!=null){ const ri=+d.rhcp, v=(t.value===""?null:(num(t.value)||0)); state.roster[ri].hcp=v;
+      const nm=state.roster[ri].name.trim().toLowerCase();
+      if(v!=null) state.players.forEach(p=>{ if(p.name.trim().toLowerCase()===nm) p.hcp=v; });  // live-update lineup
+      renderCard(); recompute(); return; }
   if(d.phcp!=null){ const p=+d.phcp, v=num(t.value)||0; state.players[p].hcp=v;
       const nm=state.players[p].name.trim().toLowerCase();
       const rm=state.roster.find(r=>r.name.trim().toLowerCase()===nm); if(rm) rm.hcp=v;   // remember this Cane's index
@@ -565,8 +598,13 @@ document.addEventListener("click", e=>{
   if(tg){ const p=+tg.dataset.team; state.players[p].team = state.players[p].team===0?1:0; renderCard(); recompute(); return; }
   const del=e.target.closest('[data-del]');
   if(del && !del.disabled){ removePlayer(+del.dataset.del); return; }
+  const rd=e.target.closest('[data-rdel]');
+  if(rd){ state.roster.splice(+rd.dataset.rdel,1); renderRoster(); renderCard(); recompute(); return; }
 });
 
+document.getElementById("addRoster").addEventListener("click",()=>{
+  state.roster.push({name:"New player", hcp:null}); renderRoster(); renderCard(); recompute();
+});
 document.getElementById("addPlayer").addEventListener("click", addPlayer);
 document.getElementById("newRound").addEventListener("click",()=>{
   if(!confirm("Start a new round? Scores, bets and greenies clear; players, teams and course stay.")) return;
@@ -582,6 +620,7 @@ document.getElementById("resetAll").addEventListener("click",()=>{
 
 function renderAll(){
   document.getElementById("defaultBet").value = state.defaultBet;
+  renderRoster();
   renderCard();
   recompute();
 }
