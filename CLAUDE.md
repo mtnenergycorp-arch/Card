@@ -35,8 +35,12 @@ Everything lives in `index.html`:
 - **`strokesFor(hcp, si)`** — allocates handicap strokes to a hole by stroke
   index. Supports course handicaps above 18 (multiple strokes) and plus
   handicaps (strokes given back from the easiest holes).
-- **`calc()`** — the scoring engine. Computes net scores, the **Low** and
-  **High** points per hole, money won/lost, and the running total.
+- **`calc()`** — the scoring engine. Computes net scores, the four point
+  categories (low / high / greenie / net birdie), the sweep doubling, money
+  won/lost, and the running total.
+- **`greenieSelect(i)`** — builds the per-hole greenie dropdown (none / Team 1 /
+  Team 2); handled via the delegated `data-greenie` branch in the `input`
+  listener.
 - **`render*()` / `recompute()`** — DOM rendering. Inputs are built once;
   `recompute()` updates only the computed cells (nets, results, money,
   summary) so typing never loses focus. Driven by a single delegated `input`
@@ -45,12 +49,16 @@ Everything lives in `index.html`:
 ## How the game is scored
 
 - **Teams:** players 1–2 = Team 1, players 3–4 = Team 2 (`team(p)` helper).
-- **Two points per hole:** the **Low** point goes to the team with the lower
-  *best* net score; the **High** point goes to the team with the lower *worst*
-  net score. Ties push (no money).
-- **Money:** net points on a hole × that hole's bet. The running **Total** is
-  from Team 1's perspective (positive = Team 1 is up).
-- A hole only counts once all four scores are entered.
+- **Six points per hole:** **Low** (2 pts, lower *best* net), **High** (2 pts,
+  lower *worst* net), **Greenie** (1 pt, manually awarded in the `Grn` column),
+  and **Net birdie** (1 pt, best net under par, head-to-head). Ties push, an
+  unawarded greenie scores nothing.
+- **Sweep:** if one team wins all six points outright, the hole doubles to
+  **12** (`sweep` / `t1`/`t2` in `calc()`).
+- **Money:** (Team 1 points − Team 2 points) × that hole's bet. The running
+  **Total** is from Team 1's perspective (positive = Team 1 is up).
+- A hole only counts once all four scores are entered. Greenie is the only
+  manual input (a per-hole `state.greenie` value: `null`/`0`/`1`).
 
 ## Development workflow
 

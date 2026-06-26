@@ -52,6 +52,9 @@
   .net{display:block;font-size:10.5px;color:var(--muted);margin-top:1px}
   .net.stroke{color:var(--green-l);font-weight:700}
   .bet-in{width:62px;text-align:center}
+  .grn-in{width:74px;padding:5px 4px;font-size:12px}
+  td.res.sweep{background:#fff6d3 !important;box-shadow:inset 0 0 0 2px var(--gold)}
+  td.res.sweep .pt{color:#9a7b00}
   td.money{font-weight:700;font-variant-numeric:tabular-nums}
   .pos{color:var(--green-l)} .neg{color:var(--t2)} .zero{color:var(--muted)}
   .res .pt{font-weight:700} .res small{color:var(--muted);display:block;font-size:10px}
@@ -143,17 +146,25 @@
     <summary class="panel-head">How High-Low scoring works</summary>
     <div class="panel-body rules-body">
       <ul>
-        <li><b>Two points per hole.</b> The <b>Low</b> point goes to the team whose <i>best</i> net score
-            is lower. The <b>High</b> point goes to the team whose <i>worst</i> net score is lower
-            (i.e. the lower of the two high scores).</li>
-        <li><b>Ties push.</b> If the two teams tie on the low ball (or the high ball), that point is halved —
-            no money changes hands for it.</li>
-        <li><b>Money.</b> Each point is worth that hole’s bet. A hole can swing −2, −1, 0, +1 or +2 points;
-            the dollar move = net points × bet. The <b>Total</b> column is the running balance from
-            Team&nbsp;1’s perspective (positive = Team&nbsp;1 is up).</li>
-        <li><b>Net scoring.</b> Strokes are given on the hardest holes by stroke index, based on each
-            player’s course handicap. A green net number means a stroke was received on that hole.</li>
+        <li><b>Six points are in play on every hole:</b>
+          <ul>
+            <li><b>Low — 2 pts.</b> Team with the lower <i>best</i> net score.</li>
+            <li><b>High — 2 pts.</b> Team with the lower <i>worst</i> net score (lower of the two high scores).</li>
+            <li><b>Greenie — 1 pt.</b> Awarded by hand in the <b>Grn</b> column (closest to the pin / on the green).</li>
+            <li><b>Net birdie — 1 pt.</b> A team’s best net score is under par and the other team’s isn’t.</li>
+          </ul>
+        </li>
+        <li><b>Sweep = ×2.</b> Win all six points outright on a hole and the total doubles to <b>12</b>.</li>
+        <li><b>Ties push.</b> A tied Low, High, or net birdie scores nothing; an unawarded greenie scores nothing.</li>
+        <li><b>Money.</b> Each point is worth that hole’s bet. The dollar move = (Team 1 points − Team 2 points)
+            × bet. The <b>Total</b> column is the running balance from Team&nbsp;1’s perspective
+            (positive = Team&nbsp;1 is up).</li>
+        <li><b>Net scoring.</b> Strokes are given on the hardest holes by stroke index, from each player’s
+            course handicap. A green net number means a stroke was received on that hole.</li>
         <li>A hole only counts once all four scores are entered.</li>
+        <li><b>Result legend:</b> <code>L</code> Low · <code>H</code> High · <code>G</code> Greenie ·
+            <code>B</code> net Birdie, where <code>1</code> = Team&nbsp;1, <code>2</code> = Team&nbsp;2,
+            <code>½</code> = push, <code>·</code> = none.</li>
       </ul>
     </div>
   </details>
@@ -167,7 +178,7 @@
 
 <script>
 "use strict";
-const STORAGE_KEY = "yccHighLow_v1";
+const STORAGE_KEY = "yccHighLow_v2";
 
 /* ---- Default course: Yellowstone Country Club, Billings (Black tees, par 72) ----
    Front nine verified from public scorecards. Back-nine par/SI/yardage are sensible
@@ -194,6 +205,7 @@ function defaultState(){
     ],
     course: DEFAULT_COURSE.map(h=>({...h})),
     bets:   Array(18).fill(5),
+    greenie:Array(18).fill(null),        // per hole: null = none, 0 = Team 1, 1 = Team 2
     scores: Array.from({length:18},()=>[null,null,null,null])
   };
 }
@@ -202,7 +214,10 @@ let state = load();
 function load(){
   try{
     const s = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    if(s && s.players && s.course && s.scores) return s;
+    if(s && s.players && s.course && s.scores){
+      if(!Array.isArray(s.greenie)) s.greenie=Array(18).fill(null);
+      return s;
+    }
   }catch(e){}
   return defaultState();
 }
@@ -240,20 +255,29 @@ function calc(){
     const allIn = g.every(v=>v!=null);
     let r={i, nets, played:false, run};
     if(allIn){
-      const aLow=Math.min(nets[0],nets[1]), bLow=Math.min(nets[2],nets[3]);
+      const aLow=Math.min(nets[0],nets[1]),  bLow=Math.min(nets[2],nets[3]);
       const aHigh=Math.max(nets[0],nets[1]), bHigh=Math.max(nets[2],nets[3]);
-      const low  = aLow<bLow ? 0 : aLow>bLow ? 1 : -1;
+      const low  = aLow<bLow ? 0 : aLow>bLow ? 1 : -1;     // 0 = Team 1, 1 = Team 2, -1 = push
       const high = aHigh<bHigh? 0 : aHigh>bHigh? 1 : -1;
-      let pts=0;
-      if(low===0)pts++; else if(low===1)pts--;
-      if(high===0)pts++; else if(high===1)pts--;
+      // net birdie: best net under par, head-to-head, ties push
+      const aBird=aLow<h.par, bBird=bLow<h.par;
+      const bird = (aBird&&!bBird)?0 : (bBird&&!aBird)?1 : -1;
+      // greenie: manually awarded
+      const grn = (state.greenie[i]===0||state.greenie[i]===1) ? state.greenie[i] : -1;
+
+      // points: Low 2, High 2, Greenie 1, Net birdie 1 (6 total) — sweep all 6 doubles to 12
+      let p1=(low===0?2:0)+(high===0?2:0)+(grn===0?1:0)+(bird===0?1:0);
+      let p2=(low===1?2:0)+(high===1?2:0)+(grn===1?1:0)+(bird===1?1:0);
+      const sweep = p1===6 ? 0 : p2===6 ? 1 : -1;
+      const t1 = sweep===0?12:p1, t2 = sweep===1?12:p2;
+
       const bet=num(state.bets[i])||0;
-      const m=pts*bet; run+=m;
+      const net=t1-t2;                       // points, Team 1 perspective
+      const m=net*bet; run+=m;
       tGross[0]+=g[0]+g[1]; tGross[1]+=g[2]+g[3];
       tNet[0]+=nets[0]+nets[1]; tNet[1]+=nets[2]+nets[3];
-      if(low===0)tPts[0]++; else if(low===1)tPts[1]++;
-      if(high===0)tPts[0]++; else if(high===1)tPts[1]++;
-      r={i, nets, played:true, low, high, pts, bet, money:m, run};
+      tPts[0]+=t1; tPts[1]+=t2;
+      r={i, nets, played:true, low, high, grn, bird, aBird, bBird, t1, t2, net, sweep, bet, money:m, run};
     }
     holes.push(r);
   }
@@ -287,7 +311,7 @@ function renderHead(){
     `<th class="t1head">${escapeHtml(p[1].name)}</th>`+
     `<th class="t2head">${escapeHtml(p[2].name)}</th>`+
     `<th class="t2head">${escapeHtml(p[3].name)}</th>`+
-    `<th>Bet</th><th>Result</th><th>Hole&nbsp;$</th><th>Total&nbsp;$</th>`;
+    `<th>Bet</th><th>Grn</th><th>Result</th><th>Hole&nbsp;$</th><th>Total&nbsp;$</th>`;
 }
 
 function scoreCellsFor(i){
@@ -296,6 +320,13 @@ function scoreCellsFor(i){
     return `<td><input class="score-in" data-score="${i}" data-pl="${p}" type="number" inputmode="numeric"
               min="1" value="${v==null?"":v}"><span class="net" id="net-${i}-${p}"></span></td>`;
   }).join("");
+}
+
+function greenieSelect(i){
+  const v=state.greenie[i];
+  const o=(val,label,sel)=>`<option value="${val}"${sel?" selected":""}>${escapeHtml(label)}</option>`;
+  return `<select class="grn-in" data-greenie="${i}">`+
+    o("","—", v==null) + o("0",state.team1name, v===0) + o("1",state.team2name, v===1) + `</select>`;
 }
 
 function renderBody(){
@@ -310,6 +341,7 @@ function renderBody(){
       `<td><input class="meta-in" data-yds="${i}" type="number" inputmode="numeric" value="${h.yds}"></td>`+
       scoreCellsFor(i)+
       `<td><input class="bet-in" data-bet="${i}" type="number" inputmode="numeric" min="0" value="${state.bets[i]}"></td>`+
+      `<td>${greenieSelect(i)}</td>`+
       `<td class="res" id="res-${i}"></td>`+
       `<td class="money" id="hm-${i}"></td>`+
       `<td class="money" id="rm-${i}"></td>`;
@@ -324,14 +356,14 @@ function turnRow(which){
   tr.id = which==="OUT"?"row-out":"row-in";
   tr.innerHTML=`<td>${which}</td><td id="${which}-par"></td><td></td><td id="${which}-yds"></td>
     <td id="${which}-0"></td><td id="${which}-1"></td><td id="${which}-2"></td><td id="${which}-3"></td>
-    <td></td><td></td><td></td><td id="${which}-tot"></td>`;
+    <td></td><td></td><td></td><td></td><td id="${which}-tot"></td>`;
   return tr;
 }
 function totalRow(){
   const tr=document.createElement("tr"); tr.className="total-row";
   tr.innerHTML=`<td>TOTAL</td><td id="T-par"></td><td></td><td id="T-yds"></td>
     <td id="T-0"></td><td id="T-1"></td><td id="T-2"></td><td id="T-3"></td>
-    <td></td><td></td><td></td><td id="T-tot"></td>`;
+    <td></td><td></td><td></td><td></td><td id="T-tot"></td>`;
   return tr;
 }
 
@@ -339,7 +371,6 @@ const moneyClass = n => n>0?"pos":n<0?"neg":"zero";
 
 function recompute(){
   const c=calc();
-  const winnerName=t=> t===0?state.team1name : t===1?state.team2name : "Push";
 
   // per-cell nets + per-hole result/money
   for(let i=0;i<18;i++){
@@ -357,12 +388,14 @@ function recompute(){
     const res=document.getElementById(`res-${i}`);
     const hm=document.getElementById(`hm-${i}`);
     const rm=document.getElementById(`rm-${i}`);
-    if(!r.played){ res.innerHTML="—"; hm.textContent=""; hm.className="money";
+    if(!r.played){ res.innerHTML="—"; res.classList.remove("sweep"); hm.textContent=""; hm.className="money";
       rm.textContent = money(r.run); rm.className="money "+moneyClass(r.run); continue; }
-    const lo = r.low===-1?"½": winnerName(r.low);
-    const hi = r.high===-1?"½": winnerName(r.high);
-    res.innerHTML = `<span class="pt ${moneyClass(r.pts)}">${r.pts>0?"+":""}${r.pts} pt${Math.abs(r.pts)===1?"":"s"}</span>
-                     <small>L: ${shortName(r.low)} · H: ${shortName(r.high)}</small>`;
+    const cat = s => s===0?"1" : s===1?"2" : "·";                    // team won the category
+    const birdTag = r.bird===-1 ? ((r.aBird&&r.bBird)?"½":"·") : cat(r.bird);
+    const sweepTxt = r.sweep===-1 ? "" : " · SWEEP ×2";
+    res.innerHTML = `<span class="pt ${moneyClass(r.net)}">${r.net>0?"+":""}${r.net} pt${Math.abs(r.net)===1?"":"s"}</span>
+                     <small>L:${cat(r.low)} H:${cat(r.high)} G:${cat(r.grn)} B:${birdTag}${sweepTxt}</small>`;
+    res.classList.toggle("sweep", r.sweep!==-1);
     hm.textContent = r.money===0?"$0":money(r.money); hm.className="money "+moneyClass(r.money);
     rm.textContent = money(r.run); rm.className="money "+moneyClass(r.run);
   }
@@ -374,10 +407,6 @@ function recompute(){
   // summary
   renderSummary(c);
   save();
-}
-function shortName(side){
-  if(side===-1) return "½";
-  return (side===0?state.team1name:state.team2name);
 }
 function fillTurn(which,from,to,c){
   let par=0,yds=0,g=[0,0,0,0];
@@ -447,8 +476,9 @@ document.addEventListener("input", e=>{
   if(d.si!=null){ state.course[+d.si].si=Math.max(1,Math.round(num(t.value)||1)); recompute(); return; }
   if(d.yds!=null){ state.course[+d.yds].yds=num(t.value)||0; recompute(); return; }
   if(d.bet!=null){ state.bets[+d.bet]=num(t.value)||0; recompute(); return; }
-  if(t.id==="team1name"){ state.team1name=t.value; renderSetup(); renderHead(); renderSummary(calc()); save(); return; }
-  if(t.id==="team2name"){ state.team2name=t.value; renderSetup(); renderHead(); renderSummary(calc()); save(); return; }
+  if(d.greenie!=null){ state.greenie[+d.greenie]= t.value===""?null:(+t.value); recompute(); return; }
+  if(t.id==="team1name"){ state.team1name=t.value; renderSetup(); renderHead(); renderBody(); recompute(); return; }
+  if(t.id==="team2name"){ state.team2name=t.value; renderSetup(); renderHead(); renderBody(); recompute(); return; }
   if(t.id==="defaultBet"){ const b=num(t.value)||0; state.defaultBet=b;
       state.bets=state.bets.map(()=>b); renderBody(); recompute(); return; }
 });
@@ -457,6 +487,7 @@ document.getElementById("newRound").addEventListener("click",()=>{
   if(!confirm("Start a new round? Scores and bets clear; players, teams and course stay.")) return;
   state.scores=Array.from({length:18},()=>[null,null,null,null]);
   state.bets=Array(18).fill(num(state.defaultBet)||0);
+  state.greenie=Array(18).fill(null);
   renderBody(); recompute();
 });
 document.getElementById("resetAll").addEventListener("click",()=>{
