@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>High-Low Scorecard — Yellowstone Country Club</title>
+<style>
+  :root{
+    --green:#1b5e20; --green-d:#0f3d15; --green-l:#2e7d32;
+    --gold:#c9a227; --bg:#f3f1e9; --card:#fff; --line:#d8d4c4;
+    --t1:#1565c0; --t2:#c62828; --ink:#222; --muted:#6b6b6b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       background:var(--bg);color:var(--ink);font-size:15px;-webkit-text-size-adjust:100%}
+  header{background:linear-gradient(135deg,var(--green),var(--green-d));color:#fff;padding:16px 18px;
+         box-shadow:0 2px 6px rgba(0,0,0,.25)}
+  header h1{margin:0;font-size:18px;letter-spacing:.3px}
+  header .sub{margin-top:3px;font-size:12.5px;opacity:.85}
+  header .badge{display:inline-block;margin-top:6px;font-size:11px;background:var(--gold);color:#000;
+                padding:2px 8px;border-radius:10px;font-weight:600}
+  main{max-width:1100px;margin:0 auto;padding:14px}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:10px;margin-bottom:14px;
+         box-shadow:0 1px 3px rgba(0,0,0,.06);overflow:hidden}
+  .panel > summary, .panel-head{background:#fafaf5;padding:11px 14px;font-weight:700;cursor:pointer;
+         border-bottom:1px solid var(--line);font-size:14px;display:flex;justify-content:space-between;align-items:center}
+  .panel-body{padding:14px}
+  .grid{display:grid;gap:12px}
+  .players-grid{grid-template-columns:repeat(2,1fr)}
+  @media(min-width:720px){.players-grid{grid-template-columns:repeat(4,1fr)}}
+  .pcard{border:1px solid var(--line);border-radius:8px;padding:10px;background:#fcfcf9}
+  .pcard.t1{border-top:4px solid var(--t1)} .pcard.t2{border-top:4px solid var(--t2)}
+  .pcard label{display:block;font-size:11px;color:var(--muted);margin:6px 0 2px;text-transform:uppercase;letter-spacing:.4px}
+  input,select{font:inherit;padding:7px 8px;border:1px solid var(--line);border-radius:6px;width:100%;background:#fff}
+  input:focus,select:focus{outline:2px solid var(--green-l);outline-offset:-1px}
+  input[type=number]{-moz-appearance:textfield}
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+  .field{flex:1;min-width:130px}
+  .field label{display:block;font-size:11px;color:var(--muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:.4px}
+  .teamtag{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:middle}
+  .teamtag.t1{background:var(--t1)} .teamtag.t2{background:var(--t2)}
+  /* scorecard */
+  .tablewrap{overflow-x:auto}
+  table{border-collapse:collapse;width:100%;font-size:13px;min-width:760px}
+  th,td{border:1px solid var(--line);padding:5px 6px;text-align:center;white-space:nowrap}
+  thead th{background:var(--green);color:#fff;font-weight:600;position:sticky;top:0;font-size:12px}
+  th.t1head{background:var(--t1)} th.t2head{background:var(--t2)}
+  tbody td.holecell{font-weight:700;background:#fafaf5}
+  tbody tr:nth-child(even) td{background:#fbfbf7}
+  .meta-in{width:42px;padding:3px;text-align:center;font-size:12px}
+  .score-in{width:46px;padding:6px 3px;text-align:center;font-weight:600;font-size:15px}
+  .net{display:block;font-size:10.5px;color:var(--muted);margin-top:1px}
+  .net.stroke{color:var(--green-l);font-weight:700}
+  .bet-in{width:62px;text-align:center}
+  td.money{font-weight:700;font-variant-numeric:tabular-nums}
+  .pos{color:var(--green-l)} .neg{color:var(--t2)} .zero{color:var(--muted)}
+  .res .pt{font-weight:700} .res small{color:var(--muted);display:block;font-size:10px}
+  .turn-row td{background:#eef3ec;font-weight:700;font-size:12px}
+  .total-row td{background:#e8efe6;font-weight:800;font-size:13px}
+  /* summary */
+  .summary-grid{display:grid;gap:12px;grid-template-columns:1fr}
+  @media(min-width:680px){.summary-grid{grid-template-columns:1fr 1fr}}
+  .standing{font-size:15px;padding:14px;border-radius:10px;text-align:center;border:1px solid var(--line);background:#fcfcf9}
+  .standing .big{font-size:30px;font-weight:800;margin:6px 0;font-variant-numeric:tabular-nums}
+  .standing .who{font-size:13px;color:var(--muted)}
+  table.sum{min-width:0;width:100%}
+  table.sum th{background:#fafaf5;color:var(--ink);border-color:var(--line)}
+  .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+  button{font:inherit;font-weight:600;padding:9px 14px;border:1px solid var(--line);border-radius:8px;
+         background:#fff;cursor:pointer}
+  button.primary{background:var(--green);color:#fff;border-color:var(--green-d)}
+  button.warn{color:var(--t2)}
+  button:active{transform:translateY(1px)}
+  .hint{font-size:12px;color:var(--muted);margin:4px 0 0}
+  details.rules summary{font-size:13px}
+  .rules-body{font-size:13px;line-height:1.55}
+  .rules-body li{margin:4px 0}
+  footer{max-width:1100px;margin:0 auto;padding:8px 14px 30px;color:var(--muted);font-size:11.5px}
+</style>
+</head>
+<body>
+<header>
+  <h1>⛳ High-Low Scorecard</h1>
+  <div class="sub">Yellowstone Country Club — Billings, Montana · Black Tees · Par 72</div>
+  <span class="badge" id="liveStanding">All square</span>
+</header>
+
+<main>
+  <!-- SETUP -->
+  <details class="panel" open>
+    <summary>Players, Teams &amp; Stakes</summary>
+    <div class="panel-body">
+      <div class="row" style="margin-bottom:12px">
+        <div class="field">
+          <label>Team 1 name</label>
+          <input id="team1name" value="Team 1">
+        </div>
+        <div class="field">
+          <label>Team 2 name</label>
+          <input id="team2name" value="Team 2">
+        </div>
+        <div class="field">
+          <label>Default bet ($ per point / hole)</label>
+          <input id="defaultBet" type="number" min="0" step="1" inputmode="numeric" value="5">
+        </div>
+      </div>
+      <div class="grid players-grid" id="playersGrid"></div>
+      <p class="hint">Handicap = your <b>course handicap</b>. Strokes are allocated to the hardest holes by
+        stroke index (the “HCP”/“SI” column). Net score = gross − strokes received on that hole.</p>
+    </div>
+  </details>
+
+  <!-- SCORECARD -->
+  <div class="panel">
+    <div class="panel-head">Scorecard <span class="hint" style="font-weight:400">Par / SI / Yards are editable</span></div>
+    <div class="panel-body" style="padding:0">
+      <div class="tablewrap">
+        <table id="card">
+          <thead><tr id="headRow"></tr></thead>
+          <tbody id="cardBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUMMARY -->
+  <div class="panel">
+    <div class="panel-head">Results &amp; Money</div>
+    <div class="panel-body">
+      <div class="summary-grid">
+        <div class="standing" id="standingCard"></div>
+        <div class="tablewrap"><table class="sum" id="sumTable"></table></div>
+      </div>
+      <div class="btnrow">
+        <button class="primary" id="newRound">＋ New round (keep players)</button>
+        <button class="warn" id="resetAll">↺ Reset everything</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RULES -->
+  <details class="panel rules">
+    <summary class="panel-head">How High-Low scoring works</summary>
+    <div class="panel-body rules-body">
+      <ul>
+        <li><b>Two points per hole.</b> The <b>Low</b> point goes to the team whose <i>best</i> net score
+            is lower. The <b>High</b> point goes to the team whose <i>worst</i> net score is lower
+            (i.e. the lower of the two high scores).</li>
+        <li><b>Ties push.</b> If the two teams tie on the low ball (or the high ball), that point is halved —
+            no money changes hands for it.</li>
+        <li><b>Money.</b> Each point is worth that hole’s bet. A hole can swing −2, −1, 0, +1 or +2 points;
+            the dollar move = net points × bet. The <b>Total</b> column is the running balance from
+            Team&nbsp;1’s perspective (positive = Team&nbsp;1 is up).</li>
+        <li><b>Net scoring.</b> Strokes are given on the hardest holes by stroke index, based on each
+            player’s course handicap. A green net number means a stroke was received on that hole.</li>
+        <li>A hole only counts once all four scores are entered.</li>
+      </ul>
+    </div>
+  </details>
+</main>
+
+<footer>
+  Front-nine course data (par / stroke index / yardage) verified from public scorecards; the back nine is
+  seeded with reasonable defaults — tap any Par / SI / Yds cell to correct it against the clubhouse card.
+  Everything saves automatically on this device.
+</footer>
+
+<script>
+"use strict";
+const STORAGE_KEY = "yccHighLow_v1";
+
+/* ---- Default course: Yellowstone Country Club, Billings (Black tees, par 72) ----
+   Front nine verified from public scorecards. Back-nine par/SI/yardage are sensible
+   defaults (par 36) and are user-editable in the table. */
+const DEFAULT_COURSE = [
+  {par:4, si:3,  yds:457}, {par:4, si:11, yds:402}, {par:5, si:5,  yds:517},
+  {par:4, si:9,  yds:395}, {par:3, si:15, yds:198}, {par:4, si:13, yds:373},
+  {par:5, si:7,  yds:525}, {par:3, si:17, yds:173}, {par:4, si:1,  yds:458},
+  // back nine (editable defaults)
+  {par:4, si:4,  yds:410}, {par:4, si:12, yds:388}, {par:3, si:16, yds:182},
+  {par:5, si:2,  yds:548}, {par:4, si:10, yds:401}, {par:4, si:8,  yds:430},
+  {par:3, si:18, yds:165}, {par:4, si:14, yds:378}, {par:5, si:6,  yds:522}
+];
+
+function defaultState(){
+  return {
+    team1name:"Team 1", team2name:"Team 2",
+    defaultBet:5,
+    players:[
+      {name:"Player 1", hcp:0},
+      {name:"Player 2", hcp:0},
+      {name:"Player 3", hcp:0},
+      {name:"Player 4", hcp:0}
+    ],
+    course: DEFAULT_COURSE.map(h=>({...h})),
+    bets:   Array(18).fill(5),
+    scores: Array.from({length:18},()=>[null,null,null,null])
+  };
+}
+
+let state = load();
+function load(){
+  try{
+    const s = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if(s && s.players && s.course && s.scores) return s;
+  }catch(e){}
+  return defaultState();
+}
+function save(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){} }
+
+const team = p => p<2 ? 0 : 1;            // players 0,1 -> team1 ; 2,3 -> team2
+const num  = v => { const n=parseFloat(v); return isFinite(n)?n:null; };
+const money = n => (n<0?"-$":"$") + Math.abs(n).toLocaleString();
+
+/* strokes received on a hole given course handicap + stroke index (supports >18 and plus handicaps) */
+function strokesFor(hcp, si){
+  hcp = Math.round(num(hcp)||0);
+  if(hcp >= 0){
+    let s=0; for(let k=0;k<4;k++){ if(hcp >= si + 18*k) s++; } return s;
+  } else {                                   // plus handicap: give strokes back from the easiest holes
+    let s=0; const ph=-hcp, giveIdx=19-si; for(let k=0;k<4;k++){ if(ph >= giveIdx + 18*k) s--; } return s;
+  }
+}
+
+/* core computation */
+function calc(){
+  let run=0;
+  const holes=[];
+  const pGross=[0,0,0,0], pNet=[0,0,0,0];
+  const tGross=[0,0], tNet=[0,0], tPts=[0,0];
+  let yardOut=0,yardIn=0,parOut=0,parIn=0;
+
+  for(let i=0;i<18;i++){
+    const h=state.course[i];
+    (i<9? (parOut+=h.par, yardOut+=(+h.yds||0)) : (parIn+=h.par, yardIn+=(+h.yds||0)));
+    const g=state.scores[i];
+    const nets=g.map((v,p)=> v==null?null : v - strokesFor(state.players[p].hcp, h.si));
+    g.forEach((v,p)=>{ if(v!=null){ pGross[p]+=v; pNet[p]+=nets[p]; }});
+
+    const allIn = g.every(v=>v!=null);
+    let r={i, nets, played:false, run};
+    if(allIn){
+      const aLow=Math.min(nets[0],nets[1]), bLow=Math.min(nets[2],nets[3]);
+      const aHigh=Math.max(nets[0],nets[1]), bHigh=Math.max(nets[2],nets[3]);
+      const low  = aLow<bLow ? 0 : aLow>bLow ? 1 : -1;
+      const high = aHigh<bHigh? 0 : aHigh>bHigh? 1 : -1;
+      let pts=0;
+      if(low===0)pts++; else if(low===1)pts--;
+      if(high===0)pts++; else if(high===1)pts--;
+      const bet=num(state.bets[i])||0;
+      const m=pts*bet; run+=m;
+      tGross[0]+=g[0]+g[1]; tGross[1]+=g[2]+g[3];
+      tNet[0]+=nets[0]+nets[1]; tNet[1]+=nets[2]+nets[3];
+      if(low===0)tPts[0]++; else if(low===1)tPts[1]++;
+      if(high===0)tPts[0]++; else if(high===1)tPts[1]++;
+      r={i, nets, played:true, low, high, pts, bet, money:m, run};
+    }
+    holes.push(r);
+  }
+  return {holes, run, pGross, pNet, tGross, tNet, tPts, parOut,parIn, yardOut,yardIn};
+}
+
+/* ---------- rendering ---------- */
+function renderSetup(){
+  document.getElementById("team1name").value = state.team1name;
+  document.getElementById("team2name").value = state.team2name;
+  document.getElementById("defaultBet").value = state.defaultBet;
+  const grid=document.getElementById("playersGrid"); grid.innerHTML="";
+  state.players.forEach((pl,i)=>{
+    const t = team(i)===0?"t1":"t2";
+    const tn = team(i)===0?state.team1name:state.team2name;
+    const el=document.createElement("div");
+    el.className="pcard "+t;
+    el.innerHTML=`<div style="font-size:11px;color:var(--muted)"><span class="teamtag ${t}"></span>${tn}</div>
+      <label>Player name</label><input data-pname="${i}" value="${escapeHtml(pl.name)}">
+      <label>Course handicap</label><input data-phcp="${i}" type="number" step="1" inputmode="numeric" value="${pl.hcp}">`;
+    grid.appendChild(el);
+  });
+}
+
+function renderHead(){
+  const r=document.getElementById("headRow");
+  const p=state.players;
+  r.innerHTML =
+    `<th>Hole</th><th>Par</th><th>SI</th><th>Yds</th>`+
+    `<th class="t1head">${escapeHtml(p[0].name)}</th>`+
+    `<th class="t1head">${escapeHtml(p[1].name)}</th>`+
+    `<th class="t2head">${escapeHtml(p[2].name)}</th>`+
+    `<th class="t2head">${escapeHtml(p[3].name)}</th>`+
+    `<th>Bet</th><th>Result</th><th>Hole&nbsp;$</th><th>Total&nbsp;$</th>`;
+}
+
+function scoreCellsFor(i){
+  return [0,1,2,3].map(p=>{
+    const v = state.scores[i][p];
+    return `<td><input class="score-in" data-score="${i}" data-pl="${p}" type="number" inputmode="numeric"
+              min="1" value="${v==null?"":v}"><span class="net" id="net-${i}-${p}"></span></td>`;
+  }).join("");
+}
+
+function renderBody(){
+  const b=document.getElementById("cardBody"); b.innerHTML="";
+  for(let i=0;i<18;i++){
+    const h=state.course[i];
+    const tr=document.createElement("tr");
+    tr.innerHTML =
+      `<td class="holecell">${i+1}</td>`+
+      `<td><input class="meta-in" data-par="${i}" type="number" inputmode="numeric" value="${h.par}"></td>`+
+      `<td><input class="meta-in" data-si="${i}"  type="number" inputmode="numeric" value="${h.si}"></td>`+
+      `<td><input class="meta-in" data-yds="${i}" type="number" inputmode="numeric" value="${h.yds}"></td>`+
+      scoreCellsFor(i)+
+      `<td><input class="bet-in" data-bet="${i}" type="number" inputmode="numeric" min="0" value="${state.bets[i]}"></td>`+
+      `<td class="res" id="res-${i}"></td>`+
+      `<td class="money" id="hm-${i}"></td>`+
+      `<td class="money" id="rm-${i}"></td>`;
+    b.appendChild(tr);
+    if(i===8) b.appendChild(turnRow("OUT"));
+    if(i===17) b.appendChild(turnRow("IN"));
+  }
+  b.appendChild(totalRow());
+}
+function turnRow(which){
+  const tr=document.createElement("tr"); tr.className="turn-row";
+  tr.id = which==="OUT"?"row-out":"row-in";
+  tr.innerHTML=`<td>${which}</td><td id="${which}-par"></td><td></td><td id="${which}-yds"></td>
+    <td id="${which}-0"></td><td id="${which}-1"></td><td id="${which}-2"></td><td id="${which}-3"></td>
+    <td></td><td></td><td></td><td id="${which}-tot"></td>`;
+  return tr;
+}
+function totalRow(){
+  const tr=document.createElement("tr"); tr.className="total-row";
+  tr.innerHTML=`<td>TOTAL</td><td id="T-par"></td><td></td><td id="T-yds"></td>
+    <td id="T-0"></td><td id="T-1"></td><td id="T-2"></td><td id="T-3"></td>
+    <td></td><td></td><td></td><td id="T-tot"></td>`;
+  return tr;
+}
+
+const moneyClass = n => n>0?"pos":n<0?"neg":"zero";
+
+function recompute(){
+  const c=calc();
+  const winnerName=t=> t===0?state.team1name : t===1?state.team2name : "Push";
+
+  // per-cell nets + per-hole result/money
+  for(let i=0;i<18;i++){
+    const h=state.course[i];
+    [0,1,2,3].forEach(p=>{
+      const span=document.getElementById(`net-${i}-${p}`);
+      const v=state.scores[i][p];
+      if(v==null){ span.textContent=""; span.className="net"; return; }
+      const st=strokesFor(state.players[p].hcp,h.si);
+      const net=v-st;
+      span.textContent = "net "+net + (st>0?` (−${st})`:st<0?` (+${-st})`:"");
+      span.className = "net"+(st>0?" stroke":"");
+    });
+    const r=c.holes[i];
+    const res=document.getElementById(`res-${i}`);
+    const hm=document.getElementById(`hm-${i}`);
+    const rm=document.getElementById(`rm-${i}`);
+    if(!r.played){ res.innerHTML="—"; hm.textContent=""; hm.className="money";
+      rm.textContent = money(r.run); rm.className="money "+moneyClass(r.run); continue; }
+    const lo = r.low===-1?"½": winnerName(r.low);
+    const hi = r.high===-1?"½": winnerName(r.high);
+    res.innerHTML = `<span class="pt ${moneyClass(r.pts)}">${r.pts>0?"+":""}${r.pts} pt${Math.abs(r.pts)===1?"":"s"}</span>
+                     <small>L: ${shortName(r.low)} · H: ${shortName(r.high)}</small>`;
+    hm.textContent = r.money===0?"$0":money(r.money); hm.className="money "+moneyClass(r.money);
+    rm.textContent = money(r.run); rm.className="money "+moneyClass(r.run);
+  }
+
+  // OUT / IN / TOTAL rows
+  fillTurn("OUT",0,9,c); fillTurn("IN",9,18,c);
+  setTurnTotals(c);
+
+  // summary
+  renderSummary(c);
+  save();
+}
+function shortName(side){
+  if(side===-1) return "½";
+  return (side===0?state.team1name:state.team2name);
+}
+function fillTurn(which,from,to,c){
+  let par=0,yds=0,g=[0,0,0,0];
+  for(let i=from;i<to;i++){ par+=state.course[i].par; yds+=(+state.course[i].yds||0);
+    state.scores[i].forEach((v,p)=>{ if(v!=null) g[p]+=v; }); }
+  document.getElementById(`${which}-par`).textContent=par;
+  document.getElementById(`${which}-yds`).textContent=yds;
+  [0,1,2,3].forEach(p=>document.getElementById(`${which}-${p}`).textContent=g[p]||"");
+  // running money at the turn
+  const idx = which==="OUT"?8:17;
+  const m=c.holes[idx].run;
+  const cell=document.getElementById(`${which}-tot`);
+  cell.textContent=money(m); cell.className=moneyClass(m);
+}
+function setTurnTotals(c){
+  document.getElementById("T-par").textContent=c.parOut+c.parIn;
+  document.getElementById("T-yds").textContent=c.yardOut+c.yardIn;
+  [0,1,2,3].forEach(p=>document.getElementById(`T-${p}`).textContent=c.pGross[p]||"");
+  const cell=document.getElementById("T-tot");
+  cell.textContent=money(c.run); cell.className=moneyClass(c.run);
+}
+
+function renderSummary(c){
+  const t1=state.team1name, t2=state.team2name;
+  // live badge
+  const badge=document.getElementById("liveStanding");
+  if(c.run===0){ badge.textContent="All square"; }
+  else{ const up=c.run>0?t1:t2; badge.textContent=`${up} up ${money(Math.abs(c.run))}`; }
+
+  // big standing card
+  const sc=document.getElementById("standingCard");
+  if(c.run===0){
+    sc.innerHTML=`<div class="who">Current standing</div><div class="big zero">All square</div>
+                  <div class="who">${t1} &nbsp;•&nbsp; ${t2}</div>`;
+  }else{
+    const up=c.run>0?t1:t2, dn=c.run>0?t2:t1, amt=Math.abs(c.run);
+    sc.innerHTML=`<div class="who"><b>${escapeHtml(up)}</b> is up</div>
+                  <div class="big pos">${money(amt)}</div>
+                  <div class="who">${escapeHtml(dn)} owes ${escapeHtml(up)} · Points ${c.tPts[0]}–${c.tPts[1]}</div>`;
+  }
+
+  // per-player / per-team table
+  const rows = state.players.map((pl,i)=>{
+    const t=team(i)===0?t1:t2; const tag=team(i)===0?"t1":"t2";
+    return `<tr><td style="text-align:left"><span class="teamtag ${tag}"></span>${escapeHtml(pl.name)}</td>
+      <td>${pl.hcp}</td><td>${c.pGross[i]||"—"}</td><td>${c.pNet[i]||"—"}</td><td style="text-align:left">${escapeHtml(t)}</td></tr>`;
+  }).join("");
+  document.getElementById("sumTable").innerHTML =
+    `<thead><tr><th style="text-align:left">Player</th><th>Hcp</th><th>Gross</th><th>Net</th><th style="text-align:left">Team</th></tr></thead>
+     <tbody>${rows}
+      <tr style="font-weight:800;background:#eef3ec">
+        <td style="text-align:left">${escapeHtml(t1)} (net)</td><td></td><td>${c.tGross[0]||"—"}</td><td>${c.tNet[0]||"—"}</td><td>${c.tPts[0]} pts</td></tr>
+      <tr style="font-weight:800;background:#fdeeee">
+        <td style="text-align:left">${escapeHtml(t2)} (net)</td><td></td><td>${c.tGross[1]||"—"}</td><td>${c.tNet[1]||"—"}</td><td>${c.tPts[1]} pts</td></tr>
+     </tbody>`;
+}
+
+function escapeHtml(s){ return String(s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m])); }
+
+/* ---------- events ---------- */
+document.addEventListener("input", e=>{
+  const t=e.target, d=t.dataset;
+  if(d.pname!=null){ state.players[+d.pname].name=t.value; renderHead(); renderSummary(calc()); save(); return; }
+  if(d.phcp!=null){ state.players[+d.phcp].hcp=num(t.value)||0; recompute(); return; }
+  if(d.score!=null){ const v=num(t.value); state.scores[+d.score][+d.pl]= (v==null||t.value==="")?null:v; recompute(); return; }
+  if(d.par!=null){ state.course[+d.par].par=num(t.value)||0; recompute(); return; }
+  if(d.si!=null){ state.course[+d.si].si=Math.max(1,Math.round(num(t.value)||1)); recompute(); return; }
+  if(d.yds!=null){ state.course[+d.yds].yds=num(t.value)||0; recompute(); return; }
+  if(d.bet!=null){ state.bets[+d.bet]=num(t.value)||0; recompute(); return; }
+  if(t.id==="team1name"){ state.team1name=t.value; renderSetup(); renderHead(); renderSummary(calc()); save(); return; }
+  if(t.id==="team2name"){ state.team2name=t.value; renderSetup(); renderHead(); renderSummary(calc()); save(); return; }
+  if(t.id==="defaultBet"){ const b=num(t.value)||0; state.defaultBet=b;
+      state.bets=state.bets.map(()=>b); renderBody(); recompute(); return; }
+});
+
+document.getElementById("newRound").addEventListener("click",()=>{
+  if(!confirm("Start a new round? Scores and bets clear; players, teams and course stay.")) return;
+  state.scores=Array.from({length:18},()=>[null,null,null,null]);
+  state.bets=Array(18).fill(num(state.defaultBet)||0);
+  renderBody(); recompute();
+});
+document.getElementById("resetAll").addEventListener("click",()=>{
+  if(!confirm("Reset everything to defaults? This clears players, scores and edits.")) return;
+  state=defaultState(); renderAll();
+});
+
+function renderAll(){ renderSetup(); renderHead(); renderBody(); recompute(); }
+renderAll();
+</script>
+</body>
+</html>
