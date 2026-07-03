@@ -58,9 +58,9 @@ scorecard lineup.
   your phone's share sheet, or copied to the clipboard.
 - **Archive & career ledger.** Tap **🏁 Finish & archive** to save a finished
   round. The **History & career ledger** panel then shows a running **$ total
-  per person** across every archived round (Hi-Lo split evenly within each team;
-  the WAD pot treated as an equal ante). Each archived round can be re-shared or
-  removed.
+  per person** across every archived round. Each player carries the **full** team
+  Hi-Lo result, and the **WAD winner collects the full pot from every other
+  player**. Each archived round can be re-shared or removed.
 - **Export / import.** Back up everything — rounds, roster, ledger — as a JSON
   file (or copy it) and restore it on another device, or hand it over to review.
 

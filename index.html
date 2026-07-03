@@ -243,9 +243,10 @@
         <button id="importData">⤒ Import data</button>
         <button id="clearHistory" class="warn">✕ Clear history</button>
       </div>
-      <p class="hint">“Finish &amp; archive” (in Results) saves the current round here. Hi-Lo money is split evenly
-        within each team; the WAD pot is treated as an equal ante (winner takes it). <b>Export</b> copies all your
-        data — rounds, roster, ledger — so you can back it up, move devices, or send it to be reviewed.</p>
+      <p class="hint">“Finish &amp; archive” (in Results) saves the current round here. Each player carries the
+        <b>full</b> Hi-Lo team result, and the <b>WAD winner collects the full pot from every other player</b>.
+        <b>Export</b> copies all your data — rounds, roster, ledger — so you can back it up, move devices, or send
+        it to be reviewed.</p>
     </div>
   </details>
 
@@ -680,13 +681,13 @@ function money2(n){ const r=Math.round(n*100)/100; return (r<0?'-$':'$')+Math.ab
 // per-player $ for the current round: Hi-Lo split evenly within each team + WAD pot as an equal ante
 function roundResults(){
   const c=calc(), n=state.players.length;
-  const sizes=[0,0]; state.players.forEach(p=>sizes[p.team]++);
-  const share=[ sizes[0]? c.run/sizes[0]:0, sizes[1]? -c.run/sizes[1]:0 ];
   const pot=wadPot(); let holder=-1;
   for(let k=state.wad.log.length-1;k>=0;k--){ if(state.wad.log[k].p<n){ holder=state.wad.log[k].p; break; } }
+  // WAD: the winner collects the full pot from every other player
   const wadPer=Array(n).fill(0);
-  if(holder>=0 && n>1){ wadPer[holder]=pot*(n-1)/n; for(let i=0;i<n;i++) if(i!==holder) wadPer[i]=-pot/n; }
-  const perPlayer=state.players.map((p,i)=>{ const hilo=p.team===0?share[0]:share[1];
+  if(holder>=0 && n>1){ wadPer[holder]=pot*(n-1); for(let i=0;i<n;i++) if(i!==holder) wadPer[i]=-pot; }
+  // Hi-Lo: each player carries the full team result (not split within the team)
+  const perPlayer=state.players.map((p,i)=>{ const hilo = p.team===0 ? c.run : -c.run;
     return { name:p.name||('Player '+(i+1)), team:p.team, hilo, wad:wadPer[i], total:hilo+wadPer[i] }; });
   return { hiLoTeam1:c.run, tPts:c.tPts.slice(), team1name:state.team1name, team2name:state.team2name,
     pot, wadHolder: holder>=0?(state.players[holder].name||('Player '+(holder+1))):null,
