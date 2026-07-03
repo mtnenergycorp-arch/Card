@@ -100,8 +100,9 @@ Everything lives in `index.html`:
 
 - **Nassau (optional) (`state.nassau`, `nassauResults()`, `renderNassau()`)** —
   three **net** side bets (front / back / total), each **$5 or $10**, scored
-  **team** (teams compared by total net; each player carries the full result) or
-  **individual** (lowest net collects each stake from every other player). A
+  **team total** (teams compared by summed net), **team best-ball** (each team
+  uses its best member's net) — both credit every player the full team result —
+  or **individual** (lowest net collects each stake from every other player). A
   segment settles once it's fully scored (`netByNine`). The per-player money is
   folded into `roundResults` (a `nassau` field), so it flows to the current-round
   preview, career ledger, and share text.

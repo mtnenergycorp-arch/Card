@@ -246,7 +246,8 @@
       <label class="nassau-enable"><input type="checkbox" id="nassauOn"> Enable Nassau</label>
       <div id="nassauControls">
         <div class="nassau-row"><span class="nlbl">Scoring</span>
-          <button class="wadstart" data-nmode="team">Team</button>
+          <button class="wadstart" data-nmode="team">Team total</button>
+          <button class="wadstart" data-nmode="bestball">Team best-ball</button>
           <button class="wadstart" data-nmode="individual">Individual</button>
         </div>
         <div class="nassau-row"><span class="nlbl">Front $</span>
@@ -258,9 +259,10 @@
       </div>
       <div id="nassauResult"></div>
       <p class="hint">Nassau is three <b>net</b> bets — front nine, back nine, and all 18 — each won by the lower
-        net. <b>Team</b>: teams compared by total net, each player carries the full result. <b>Individual</b>:
-        the low-net player collects each stake from every other player. A segment settles once it’s fully scored;
-        the money flows into the ledger &amp; share.</p>
+        net. <b>Team total</b>: teams compared by the sum of their nets. <b>Team best-ball</b>: each team uses its
+        best (lowest) member's net. Both credit every player the full team result. <b>Individual</b>: the low-net
+        player collects each stake from every other player. A segment settles once it’s fully scored; the money
+        flows into the ledger &amp; share.</p>
     </div>
   </details>
 
@@ -489,11 +491,12 @@ function nassauResults(){
   const vals={front:nb.f, back:nb.bk, total:nb.total};
   function settle(k, values, isDone, stake){
     if(!isDone || !stake || n<2) return;
-    if(N.mode==='team'){
-      const t=[0,0], cnt=[0,0];
-      state.players.forEach((p,i)=>{ t[p.team]+=values[i]; cnt[p.team]++; });
+    if(N.mode!=='individual'){
+      const bb=N.mode==='bestball';                         // best-ball: team net = its best (lowest) member
+      const t=[bb?Infinity:0, bb?Infinity:0], cnt=[0,0];
+      state.players.forEach((p,i)=>{ cnt[p.team]++; if(bb) t[p.team]=Math.min(t[p.team],values[i]); else t[p.team]+=values[i]; });
       if(!cnt[0]||!cnt[1]) return;
-      const w = t[0]<t[1]?0 : t[0]>t[1]?1 : -1;           // lower net wins the segment
+      const w = t[0]<t[1]?0 : t[0]>t[1]?1 : -1;             // lower net wins the segment
       seg[k].winner = w===-1?'Push' : (w===0?state.team1name:state.team2name);
       if(w===-1) return;
       state.players.forEach((p,i)=>{ const amt=(p.team===w? stake : -stake); per[i]+=amt; perSeg[i][k]=amt; });  // each player carries the full result
