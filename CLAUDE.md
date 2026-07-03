@@ -98,6 +98,16 @@ Everything lives in `index.html`:
   `#wadHole`, and undo/reset buttons. The log is realigned in `removePlayer`
   and cleared on "New round".
 
+- **Nassau (optional) (`state.nassau`, `nassauResults()`, `renderNassau()`)** —
+  three **net** side bets (front / back / total), each **$5 or $10**, scored
+  **team** (teams compared by total net; each player carries the full result) or
+  **individual** (lowest net collects each stake from every other player). A
+  segment settles once it's fully scored (`netByNine`). The per-player money is
+  folded into `roundResults` (a `nassau` field), so it flows to the current-round
+  preview, career ledger, and share text.
+- **Net-by-nine** — the **Results** summary shows each player's and team's
+  **Net F / Net B / Net** (front, back, total net), computed by `netByNine()`.
+
 ## How the game is scored
 
 - **Teams:** each player carries a `team` (0 = Team 1, 1 = Team 2); `team(p)`

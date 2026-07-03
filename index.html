@@ -58,6 +58,12 @@
   .arow .ares{flex:1;min-width:150px;color:#333}
   .arow button{padding:5px 10px;font-size:12px}
   .cur-head{font-weight:800;margin:16px 0 6px}
+  /* nassau */
+  .nassau-enable{font-weight:700;display:flex;gap:8px;align-items:center;cursor:pointer}
+  .nassau-enable input{width:18px;height:18px}
+  .nassau-row{display:flex;gap:6px;align-items:center;margin:8px 0;font-size:13px}
+  .nassau-row .nlbl{min-width:70px;color:var(--muted);font-weight:700}
+  #nassauResult{margin-top:6px;font-size:13px;line-height:1.6}
 
   /* ---------- scorecard grid ---------- */
   .tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
@@ -231,6 +237,33 @@
     </div>
   </details>
 
+  <!-- NASSAU -->
+  <details class="panel" id="nassauPanel">
+    <summary class="panel-head">Nassau (optional)
+      <span class="hint">front / back / total net side bets</span>
+    </summary>
+    <div class="panel-body">
+      <label class="nassau-enable"><input type="checkbox" id="nassauOn"> Enable Nassau</label>
+      <div id="nassauControls">
+        <div class="nassau-row"><span class="nlbl">Scoring</span>
+          <button class="wadstart" data-nmode="team">Team</button>
+          <button class="wadstart" data-nmode="individual">Individual</button>
+        </div>
+        <div class="nassau-row"><span class="nlbl">Front $</span>
+          <button class="wadstart" data-nstake="front:5">$5</button><button class="wadstart" data-nstake="front:10">$10</button></div>
+        <div class="nassau-row"><span class="nlbl">Back $</span>
+          <button class="wadstart" data-nstake="back:5">$5</button><button class="wadstart" data-nstake="back:10">$10</button></div>
+        <div class="nassau-row"><span class="nlbl">Total $</span>
+          <button class="wadstart" data-nstake="total:5">$5</button><button class="wadstart" data-nstake="total:10">$10</button></div>
+      </div>
+      <div id="nassauResult"></div>
+      <p class="hint">Nassau is three <b>net</b> bets — front nine, back nine, and all 18 — each won by the lower
+        net. <b>Team</b>: teams compared by total net, each player carries the full result. <b>Individual</b>:
+        the low-net player collects each stake from every other player. A segment settles once it’s fully scored;
+        the money flows into the ledger &amp; share.</p>
+    </div>
+  </details>
+
   <!-- HISTORY & LEDGER -->
   <details class="panel" id="historyPanel">
     <summary class="panel-head">History &amp; career ledger
@@ -325,6 +358,7 @@ function defaultState(){
     scores: Array.from({length:18},()=>[null,null,null,null]),
     wad: {start:5, hole:1, log:[]},      // WAD putting game: pot start, current hole, chronological log of {p, hole}
     greenieByPlayer: true,               // greenie stores a player index (not a team)
+    nassau: {on:false, mode:'team', front:5, back:5, total:5},   // optional Nassau side bets
     archive: []                          // finished rounds, for the career ledger
   };
 }
@@ -340,6 +374,7 @@ function load(){
       else { if(s.wad.hole==null) s.wad.hole=1;
              s.wad.log = s.wad.log.map(e=> typeof e==="number" ? {p:e, hole:null} : e); }  // migrate old index-only log
       if(!Array.isArray(s.archive)) s.archive=[];
+      if(!s.nassau) s.nassau={on:false, mode:'team', front:5, back:5, total:5};
       if(!s.greenieByPlayer){                                    // migrate team-based greenie → a player on that team
         s.greenie = s.greenie.map(g=>{ if(g==null) return null; const i=s.players.findIndex(p=>p.team===g); return i>=0?i:null; });
         s.greenieByPlayer=true;
@@ -430,6 +465,49 @@ function calc(){
     holes.push(r);
   }
   return {holes, run, pGross, pNet, tGross, tNet, tPts, parOut,parIn, yardOut,yardIn};
+}
+
+/* net totals per player by nine (using match-play playing handicaps) */
+function netByNine(){
+  const n=state.players.length, ph=playingHcaps();
+  const f=Array(n).fill(0), bk=Array(n).fill(0), fDone=Array(n).fill(true), bDone=Array(n).fill(true);
+  for(let i=0;i<18;i++){ const h=state.course[i];
+    for(let p=0;p<n;p++){ const v=state.scores[i][p];
+      if(v==null){ if(i<9) fDone[p]=false; else bDone[p]=false; continue; }
+      const net=v-strokesFor(ph[p],h.si); if(i<9) f[p]+=net; else bk[p]+=net; } }
+  return { f, bk, total:f.map((x,p)=>x+bk[p]), fDone, bDone, tDone:f.map((_,p)=>fDone[p]&&bDone[p]) };
+}
+
+/* optional Nassau — three net bets (front / back / total), scored by team or individually */
+function nassauResults(){
+  const N=state.nassau, n=state.players.length, per=Array(n).fill(0);
+  const seg={front:{winner:null,stake:N.front}, back:{winner:null,stake:N.back}, total:{winner:null,stake:N.total}};
+  if(!N.on) return {per, seg, on:false};
+  const nb=netByNine();
+  const done={front:nb.fDone.every(Boolean), back:nb.bDone.every(Boolean), total:nb.tDone.every(Boolean)};
+  const vals={front:nb.f, back:nb.bk, total:nb.total};
+  function settle(k, values, isDone, stake){
+    if(!isDone || !stake || n<2) return;
+    if(N.mode==='team'){
+      const t=[0,0], cnt=[0,0];
+      state.players.forEach((p,i)=>{ t[p.team]+=values[i]; cnt[p.team]++; });
+      if(!cnt[0]||!cnt[1]) return;
+      const w = t[0]<t[1]?0 : t[0]>t[1]?1 : -1;           // lower net wins the segment
+      seg[k].winner = w===-1?'Push' : (w===0?state.team1name:state.team2name);
+      if(w===-1) return;
+      state.players.forEach((p,i)=>{ per[i]+= (p.team===w? stake : -stake); });   // each player carries the full result
+    } else {
+      let lo=Infinity, wi=-1, tie=false;
+      values.forEach((v,i)=>{ if(v<lo){lo=v;wi=i;tie=false;} else if(v===lo){tie=true;} });
+      if(wi<0||tie){ seg[k].winner='Push'; return; }
+      seg[k].winner = state.players[wi].name||('P'+(wi+1));
+      values.forEach((v,i)=>{ per[i]+= (i===wi? stake*(n-1) : -stake); });        // low net collects each stake
+    }
+  }
+  settle('front', vals.front, done.front, N.front);
+  settle('back',  vals.back,  done.back,  N.back);
+  settle('total', vals.total, done.total, N.total);
+  return {per, seg, on:true};
 }
 
 /* ---------- build the scorecard (inputs built once) ---------- */
@@ -625,6 +703,7 @@ function recompute(){
 
   renderSummary(c);
   renderWad();
+  renderNassau();
   renderCurrentRound();
   const ab=document.getElementById('archiveRound'); if(ab && ab.disabled){ ab.disabled=false; ab.textContent='🏁 Finish & archive'; }
   save();
@@ -647,18 +726,23 @@ function renderSummary(c){
                   <div class="who">${escapeHtml(dn)} owes ${escapeHtml(up)} · Points ${c.tPts[0]}–${c.tPts[1]}</div>`;
   }
 
+  const nb=netByNine();
+  const tF=[0,0],tB=[0,0],tT=[0,0];
+  state.players.forEach((pl,i)=>{ const t=pl.team; tF[t]+=nb.f[i]; tB[t]+=nb.bk[i]; tT[t]+=nb.total[i]; });
   const rows = state.players.map((pl,i)=>{
     const tag=team(i)===0?"t1":"t2", tn=team(i)===0?t1:t2;
     return `<tr><td style="text-align:left"><span class="teamtag ${tag}"></span>${escapeHtml(pl.name)}</td>
-      <td>${pl.hcp}</td><td>${c.pGross[i]||"—"}</td><td>${c.pNet[i]||"—"}</td><td style="text-align:left">${escapeHtml(tn)}</td></tr>`;
+      <td>${pl.hcp}</td><td>${c.pGross[i]||"—"}</td>
+      <td>${nb.f[i]||"—"}</td><td>${nb.bk[i]||"—"}</td><td>${nb.total[i]||"—"}</td>
+      <td style="text-align:left">${escapeHtml(tn)}</td></tr>`;
   }).join("");
   document.getElementById("sumTable").innerHTML =
-    `<thead><tr><th style="text-align:left">Player</th><th>Hcp</th><th>Gross</th><th>Net</th><th style="text-align:left">Team</th></tr></thead>
+    `<thead><tr><th style="text-align:left">Player</th><th>Hcp</th><th>Gross</th><th>Net&nbsp;F</th><th>Net&nbsp;B</th><th>Net</th><th style="text-align:left">Team</th></tr></thead>
      <tbody>${rows}
       <tr style="font-weight:800;background:var(--t1bg)">
-        <td style="text-align:left">${escapeHtml(t1)} (net)</td><td></td><td>${c.tGross[0]||"—"}</td><td>${c.tNet[0]||"—"}</td><td>${c.tPts[0]} pts</td></tr>
+        <td style="text-align:left">${escapeHtml(t1)} (net)</td><td></td><td>${c.tGross[0]||"—"}</td><td>${tF[0]||"—"}</td><td>${tB[0]||"—"}</td><td>${tT[0]||"—"}</td><td>${c.tPts[0]} pts</td></tr>
       <tr style="font-weight:800;background:var(--t2bg)">
-        <td style="text-align:left">${escapeHtml(t2)} (net)</td><td></td><td>${c.tGross[1]||"—"}</td><td>${c.tNet[1]||"—"}</td><td>${c.tPts[1]} pts</td></tr>
+        <td style="text-align:left">${escapeHtml(t2)} (net)</td><td></td><td>${c.tGross[1]||"—"}</td><td>${tF[1]||"—"}</td><td>${tB[1]||"—"}</td><td>${tT[1]||"—"}</td><td>${c.tPts[1]} pts</td></tr>
      </tbody>`;
 }
 
@@ -690,13 +774,14 @@ function roundResults(){
   // WAD: the winner collects the full pot from every other player
   const wadPer=Array(n).fill(0);
   if(holder>=0 && n>1){ wadPer[holder]=pot*(n-1); for(let i=0;i<n;i++) if(i!==holder) wadPer[i]=-pot; }
+  const nr=nassauResults();
   // Hi-Lo: each player carries the full team result (not split within the team)
-  const perPlayer=state.players.map((p,i)=>{ const hilo = p.team===0 ? c.run : -c.run;
-    return { name:p.name||('Player '+(i+1)), team:p.team, hilo, wad:wadPer[i], total:hilo+wadPer[i] }; });
+  const perPlayer=state.players.map((p,i)=>{ const hilo = p.team===0 ? c.run : -c.run, nassau=nr.per[i]||0;
+    return { name:p.name||('Player '+(i+1)), team:p.team, hilo, wad:wadPer[i], nassau, total:hilo+wadPer[i]+nassau }; });
   return { hiLoTeam1:c.run, tPts:c.tPts.slice(), team1name:state.team1name, team2name:state.team2name,
     pot, wadHolder: holder>=0?(state.players[holder].name||('Player '+(holder+1))):null,
     wadLog: state.wad.log.filter(e=>e.p<n).map(e=>({name:state.players[e.p].name||('P'+(e.p+1)), hole:e.hole})),
-    perPlayer };
+    nassau:{on:nr.on, mode:state.nassau.mode, seg:nr.seg}, perPlayer };
 }
 
 function roundSummaryText(r){
@@ -704,8 +789,10 @@ function roundSummaryText(r){
   L.push('⛳ High-Low — Yellowstone CC (Blue tees)');
   if(r.label) L.push(r.label);
   L.push(net===0?'High-Low: all square':`High-Low: ${net>0?t1:t2} up ${money(Math.abs(net))} (points ${r.tPts[0]}–${r.tPts[1]})`);
-  r.perPlayer.forEach(pp=> L.push(`  • ${pp.name} [${pp.team===0?t1:t2}] Hi-Lo ${money2(pp.hilo)}${pp.wad?` · WAD ${money2(pp.wad)}`:''} · total ${money2(pp.total)}`));
+  r.perPlayer.forEach(pp=> L.push(`  • ${pp.name} [${pp.team===0?t1:t2}] Hi-Lo ${money2(pp.hilo)}${pp.wad?` · WAD ${money2(pp.wad)}`:''}${pp.nassau?` · Nassau ${money2(pp.nassau)}`:''} · total ${money2(pp.total)}`));
   if(r.wadHolder) L.push(`WAD: ${r.wadHolder} wins the ${money(r.pot)} pot`+(r.wadLog&&r.wadLog.length?` (${r.wadLog.map(e=>(e.hole?'H'+e.hole:'H?')+' '+e.name).join(', ')})`:''));
+  if(r.nassau && r.nassau.on){ const s=r.nassau.seg;
+    L.push(`Nassau (${r.nassau.mode}): Front ${s.front.winner||'—'} $${s.front.stake} · Back ${s.back.winner||'—'} $${s.back.stake} · Total ${s.total.winner||'—'} $${s.total.stake}`); }
   return L.join('\n');
 }
 async function shareText(text){
@@ -733,35 +820,53 @@ function roundLedgerRows(rd){
   return rd.perPlayer.map(pp=>{
     const hilo = pp.team===0 ? net : -net;                                   // each player carries the full team result
     const wad  = hasWinner ? (pp.name===rd.wadHolder ? pot*(n-1) : -pot) : 0; // winner takes the full pot from each other
-    return { name:pp.name, hilo, wad, total:hilo+wad };
+    const nassau = pp.nassau||0;                                             // Nassau snapshot (from archive time)
+    return { name:pp.name, hilo, wad, nassau, total:hilo+wad+nassau };
   });
 }
 function ledger(){
   const m={};
   state.archive.forEach(rd=> roundLedgerRows(rd).forEach(pp=>{ const k=(pp.name||'').trim()||'—';
-    if(!m[k]) m[k]={name:pp.name||'—',rounds:0,hilo:0,wad:0,total:0};
-    m[k].rounds++; m[k].hilo+=pp.hilo; m[k].wad+=pp.wad; m[k].total+=pp.total; }));
+    if(!m[k]) m[k]={name:pp.name||'—',rounds:0,hilo:0,wad:0,nassau:0,total:0};
+    m[k].rounds++; m[k].hilo+=pp.hilo; m[k].wad+=pp.wad; m[k].nassau+=(pp.nassau||0); m[k].total+=pp.total; }));
   return Object.values(m).sort((a,b)=>b.total-a.total);
 }
+function renderNassau(){
+  const N=state.nassau;
+  document.getElementById('nassauOn').checked = !!N.on;
+  document.getElementById('nassauControls').style.display = N.on ? '' : 'none';
+  document.querySelectorAll('[data-nmode]').forEach(b=>b.classList.toggle('on', b.dataset.nmode===N.mode));
+  document.querySelectorAll('[data-nstake]').forEach(b=>{ const p=b.dataset.nstake.split(':'); b.classList.toggle('on', N[p[0]]===+p[1]); });
+  const res=document.getElementById('nassauResult');
+  if(!N.on){ res.innerHTML=''; return; }
+  const nr=nassauResults();
+  const seg=k=>{ const s=nr.seg[k]; return `${s.winner?escapeHtml(s.winner):'<span class="hint">pending</span>'} <span class="hint">$${s.stake}</span>`; };
+  res.innerHTML = `<div><b>Front:</b> ${seg('front')} &nbsp; <b>Back:</b> ${seg('back')} &nbsp; <b>Total (18):</b> ${seg('total')}</div>`+
+    `<div class="hint" style="margin-top:6px">Nassau $ — `+
+      state.players.map((p,i)=>`${escapeHtml(p.name||('P'+(i+1)))} <span class="${moneyClass(nr.per[i])}">${money2(nr.per[i])}</span>`).join(' · ')+`</div>`;
+}
+
 // live preview of the round in progress (not yet archived)
 function renderCurrentRound(){
   const el=document.getElementById('ledgerCurrent'); if(!el) return;
   const r=roundResults();
   el.innerHTML =
     `<div class="cur-head">Current round <span class="hint">— live, not archived yet</span></div>`+
-    `<table class="tot"><thead><tr><th style="text-align:left">Player</th><th>Hi-Lo</th><th>WAD</th><th>Total</th></tr></thead><tbody>`+
+    `<table class="tot"><thead><tr><th style="text-align:left">Player</th><th>Hi-Lo</th><th>WAD</th><th>Nassau</th><th>Total</th></tr></thead><tbody>`+
     r.perPlayer.map(pp=>`<tr><td style="text-align:left">${escapeHtml(pp.name)}</td>`+
       `<td class="${moneyClass(pp.hilo)}">${money2(pp.hilo)}</td>`+
       `<td class="${moneyClass(pp.wad)}">${money2(pp.wad)}</td>`+
+      `<td class="${moneyClass(pp.nassau)}">${money2(pp.nassau)}</td>`+
       `<td class="${moneyClass(pp.total)}"><b>${money2(pp.total)}</b></td></tr>`).join('')+
     `</tbody></table>`;
 }
 function renderHistory(){
   const led=ledger();
   document.getElementById('ledgerTable').innerHTML = led.length
-    ? `<thead><tr><th style="text-align:left">Player</th><th>Rds</th><th>Hi-Lo</th><th>WAD</th><th>Total</th></tr></thead><tbody>`+
+    ? `<thead><tr><th style="text-align:left">Player</th><th>Rds</th><th>Hi-Lo</th><th>WAD</th><th>Nassau</th><th>Total</th></tr></thead><tbody>`+
       led.map(x=>`<tr><td style="text-align:left">${escapeHtml(x.name)}</td><td>${x.rounds}</td>`+
         `<td class="${moneyClass(x.hilo)}">${money2(x.hilo)}</td><td class="${moneyClass(x.wad)}">${money2(x.wad)}</td>`+
+        `<td class="${moneyClass(x.nassau)}">${money2(x.nassau)}</td>`+
         `<td class="${moneyClass(x.total)}"><b>${money2(x.total)}</b></td></tr>`).join('')+`</tbody>`
     : `<tbody><tr><td class="hint" style="padding:12px;text-align:left">No archived rounds yet — finish a round and tap “Finish &amp; archive”.</td></tr></tbody>`;
   document.getElementById('archiveList').innerHTML = state.archive.slice().reverse().map(rd=>{
@@ -838,6 +943,7 @@ document.addEventListener("change", e=>{
     state.players[p].name=r.name; if(r.hcp!=null) state.players[p].hcp=r.hcp;
     renderCard(); recompute(); return; }
   if(e.target.id==="wadHole"){ state.wad.hole=+e.target.value; save(); return; }
+  if(e.target.id==="nassauOn"){ state.nassau.on=e.target.checked; renderNassau(); recompute(); return; }
 });
 
 document.addEventListener("click", e=>{
@@ -858,6 +964,10 @@ document.addEventListener("click", e=>{
   if(ws){ state.wad.start=+ws.dataset.wadstart; renderWad(); save(); return; }
   const wb=e.target.closest('[data-wad]');
   if(wb){ state.wad.log.push({p:+wb.dataset.wad, hole:state.wad.hole||null}); renderWad(); save(); return; }
+  const nm=e.target.closest('[data-nmode]');
+  if(nm){ state.nassau.mode=nm.dataset.nmode; renderNassau(); recompute(); return; }
+  const nst=e.target.closest('[data-nstake]');
+  if(nst){ const p=nst.dataset.nstake.split(':'); state.nassau[p[0]]=+p[1]; renderNassau(); recompute(); return; }
 });
 
 document.getElementById("wadUndo").addEventListener("click",()=>{ state.wad.log.pop(); renderWad(); save(); });

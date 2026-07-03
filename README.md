@@ -51,6 +51,16 @@ wadded on** (e.g. "Cody — 2 wads · H3, H12") plus the full order. The current
 holder is highlighted, and there's **undo** and **reset**. Players come from the
 scorecard lineup.
 
+## Nassau (optional side game)
+
+A classic **Nassau** you can switch on: three separate **net** bets — **front
+nine, back nine, and all 18** — each set to **$5 or $10**. Score it **by team**
+(teams compared on total net; lower net wins the segment) or **individually**
+(the low-net player wins the segment). Each segment settles once it's fully
+scored, and the money rolls into the results, ledger, and share summary. The
+**Results** panel also shows front / back / total **net** scores per player and
+team.
+
 ## History, ledger & sharing
 
 - **Share round.** In Results, tap **📤 Share round** to send a plain-text
