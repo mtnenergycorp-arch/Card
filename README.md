@@ -60,7 +60,9 @@ the segment) or **individually** (the low-net player wins the segment). Each seg
 scored, and the money rolls into the results, ledger, and share summary. The
 Nassau tab shows a **per-player win/loss table** — each player's Front, Back,
 Total, and combined Nassau $ — plus the segment winners. The **Results** panel
-also shows front / back / total **net** scores per player and team.
+also shows front / back / total **net** scores per player and team, plus a
+**Net (full)** reference column — each player's net off their full course
+handicap vs par — to see how close to par they finished.
 
 ## History, ledger & sharing
 

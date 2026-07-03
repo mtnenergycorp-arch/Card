@@ -199,8 +199,11 @@
     <div class="panel-body">
       <div class="summary-grid">
         <div class="standing" id="standingCard"></div>
-        <table class="tot" id="sumTable"></table>
+        <div class="tablewrap"><table class="tot" id="sumTable"></table></div>
       </div>
+      <p class="hint"><b>Net (full)</b> is each player's net off their <b>full course handicap</b> (from scratch)
+        vs par for holes played — a reference to see how close to par you are. The game still scores off the low
+        handicap (the Net&nbsp;F / Net&nbsp;B / Net columns).</p>
       <div class="btnrow">
         <button id="shareRound">📤 Share round</button>
         <button id="archiveRound">🏁 Finish &amp; archive</button>
@@ -469,9 +472,10 @@ function calc(){
   return {holes, run, pGross, pNet, tGross, tNet, tPts, parOut,parIn, yardOut,yardIn};
 }
 
-/* net totals per player by nine (using match-play playing handicaps) */
-function netByNine(){
-  const n=state.players.length, ph=playingHcaps();
+/* net totals per player by nine (defaults to match-play playing handicaps; pass a
+   handicap array to compute off full course handicaps instead) */
+function netByNine(hcaps){
+  const n=state.players.length, ph=hcaps||playingHcaps();
   const f=Array(n).fill(0), bk=Array(n).fill(0), fDone=Array(n).fill(true), bDone=Array(n).fill(true);
   for(let i=0;i<18;i++){ const h=state.course[i];
     for(let p=0;p<n;p++){ const v=state.scores[i][p];
@@ -731,6 +735,10 @@ function renderSummary(c){
   }
 
   const nb=netByNine();
+  const full=netByNine(state.players.map(p=>Math.round(num(p.hcp)||0)));   // net off full course handicap (reference)
+  const parPlayed=Array(state.players.length).fill(0);
+  for(let i=0;i<18;i++) for(let p=0;p<state.players.length;p++) if(state.scores[i][p]!=null) parPlayed[p]+=state.course[i].par;
+  const vsPar = i => { const fn=full.total[i]; if(!fn) return '—'; const d=fn-parPlayed[i]; return `${fn} (${d>0?'+'+d:d<0?d:'E'})`; };
   const tF=[0,0],tB=[0,0],tT=[0,0];
   state.players.forEach((pl,i)=>{ const t=pl.team; tF[t]+=nb.f[i]; tB[t]+=nb.bk[i]; tT[t]+=nb.total[i]; });
   const rows = state.players.map((pl,i)=>{
@@ -738,15 +746,16 @@ function renderSummary(c){
     return `<tr><td style="text-align:left"><span class="teamtag ${tag}"></span>${escapeHtml(pl.name)}</td>
       <td>${pl.hcp}</td><td>${c.pGross[i]||"—"}</td>
       <td>${nb.f[i]||"—"}</td><td>${nb.bk[i]||"—"}</td><td>${nb.total[i]||"—"}</td>
+      <td>${vsPar(i)}</td>
       <td style="text-align:left">${escapeHtml(tn)}</td></tr>`;
   }).join("");
   document.getElementById("sumTable").innerHTML =
-    `<thead><tr><th style="text-align:left">Player</th><th>Hcp</th><th>Gross</th><th>Net&nbsp;F</th><th>Net&nbsp;B</th><th>Net</th><th style="text-align:left">Team</th></tr></thead>
+    `<thead><tr><th style="text-align:left">Player</th><th>Hcp</th><th>Gross</th><th>Net&nbsp;F</th><th>Net&nbsp;B</th><th>Net</th><th>Net&nbsp;(full)</th><th style="text-align:left">Team</th></tr></thead>
      <tbody>${rows}
       <tr style="font-weight:800;background:var(--t1bg)">
-        <td style="text-align:left">${escapeHtml(t1)} (net)</td><td></td><td>${c.tGross[0]||"—"}</td><td>${tF[0]||"—"}</td><td>${tB[0]||"—"}</td><td>${tT[0]||"—"}</td><td>${c.tPts[0]} pts</td></tr>
+        <td style="text-align:left">${escapeHtml(t1)} (net)</td><td></td><td>${c.tGross[0]||"—"}</td><td>${tF[0]||"—"}</td><td>${tB[0]||"—"}</td><td>${tT[0]||"—"}</td><td></td><td>${c.tPts[0]} pts</td></tr>
       <tr style="font-weight:800;background:var(--t2bg)">
-        <td style="text-align:left">${escapeHtml(t2)} (net)</td><td></td><td>${c.tGross[1]||"—"}</td><td>${tF[1]||"—"}</td><td>${tB[1]||"—"}</td><td>${tT[1]||"—"}</td><td>${c.tPts[1]} pts</td></tr>
+        <td style="text-align:left">${escapeHtml(t2)} (net)</td><td></td><td>${c.tGross[1]||"—"}</td><td>${tF[1]||"—"}</td><td>${tB[1]||"—"}</td><td>${tT[1]||"—"}</td><td></td><td>${c.tPts[1]} pts</td></tr>
      </tbody>`;
 }
 

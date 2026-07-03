@@ -107,7 +107,10 @@ Everything lives in `index.html`:
   folded into `roundResults` (a `nassau` field), so it flows to the current-round
   preview, career ledger, and share text.
 - **Net-by-nine** — the **Results** summary shows each player's and team's
-  **Net F / Net B / Net** (front, back, total net), computed by `netByNine()`.
+  **Net F / Net B / Net** (front, back, total net) from `netByNine()`, plus a
+  **Net (full)** reference column — net off each player's *full* course handicap
+  vs par for holes played (`netByNine(fullHcaps)`), a reference only, not used
+  for scoring.
 
 ## How the game is scored
 
