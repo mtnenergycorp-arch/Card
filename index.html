@@ -481,8 +481,9 @@ function netByNine(){
 /* optional Nassau — three net bets (front / back / total), scored by team or individually */
 function nassauResults(){
   const N=state.nassau, n=state.players.length, per=Array(n).fill(0);
+  const perSeg=state.players.map(()=>({front:0, back:0, total:0}));
   const seg={front:{winner:null,stake:N.front}, back:{winner:null,stake:N.back}, total:{winner:null,stake:N.total}};
-  if(!N.on) return {per, seg, on:false};
+  if(!N.on) return {per, perSeg, seg, on:false};
   const nb=netByNine();
   const done={front:nb.fDone.every(Boolean), back:nb.bDone.every(Boolean), total:nb.tDone.every(Boolean)};
   const vals={front:nb.f, back:nb.bk, total:nb.total};
@@ -495,19 +496,19 @@ function nassauResults(){
       const w = t[0]<t[1]?0 : t[0]>t[1]?1 : -1;           // lower net wins the segment
       seg[k].winner = w===-1?'Push' : (w===0?state.team1name:state.team2name);
       if(w===-1) return;
-      state.players.forEach((p,i)=>{ per[i]+= (p.team===w? stake : -stake); });   // each player carries the full result
+      state.players.forEach((p,i)=>{ const amt=(p.team===w? stake : -stake); per[i]+=amt; perSeg[i][k]=amt; });  // each player carries the full result
     } else {
       let lo=Infinity, wi=-1, tie=false;
       values.forEach((v,i)=>{ if(v<lo){lo=v;wi=i;tie=false;} else if(v===lo){tie=true;} });
       if(wi<0||tie){ seg[k].winner='Push'; return; }
       seg[k].winner = state.players[wi].name||('P'+(wi+1));
-      values.forEach((v,i)=>{ per[i]+= (i===wi? stake*(n-1) : -stake); });        // low net collects each stake
+      values.forEach((v,i)=>{ const amt=(i===wi? stake*(n-1) : -stake); per[i]+=amt; perSeg[i][k]=amt; });        // low net collects each stake
     }
   }
   settle('front', vals.front, done.front, N.front);
   settle('back',  vals.back,  done.back,  N.back);
   settle('total', vals.total, done.total, N.total);
-  return {per, seg, on:true};
+  return {per, perSeg, seg, on:true};
 }
 
 /* ---------- build the scorecard (inputs built once) ---------- */
@@ -841,9 +842,14 @@ function renderNassau(){
   if(!N.on){ res.innerHTML=''; return; }
   const nr=nassauResults();
   const seg=k=>{ const s=nr.seg[k]; return `${s.winner?escapeHtml(s.winner):'<span class="hint">pending</span>'} <span class="hint">$${s.stake}</span>`; };
-  res.innerHTML = `<div><b>Front:</b> ${seg('front')} &nbsp; <b>Back:</b> ${seg('back')} &nbsp; <b>Total (18):</b> ${seg('total')}</div>`+
-    `<div class="hint" style="margin-top:6px">Nassau $ — `+
-      state.players.map((p,i)=>`${escapeHtml(p.name||('P'+(i+1)))} <span class="${moneyClass(nr.per[i])}">${money2(nr.per[i])}</span>`).join(' · ')+`</div>`;
+  const cell=v=> v ? `<td class="${moneyClass(v)}">${money2(v)}</td>` : `<td class="zero">—</td>`;
+  const rows=state.players.map((p,i)=>{ const ps=nr.perSeg[i];
+    return `<tr><td style="text-align:left">${escapeHtml(p.name||('Player '+(i+1)))}</td>`+
+      cell(ps.front)+cell(ps.back)+cell(ps.total)+
+      `<td class="${moneyClass(nr.per[i])}"><b>${money2(nr.per[i])}</b></td></tr>`; }).join('');
+  res.innerHTML =
+    `<div class="nassau-seg">Winners — <b>Front:</b> ${seg('front')} &nbsp;·&nbsp; <b>Back:</b> ${seg('back')} &nbsp;·&nbsp; <b>Total&nbsp;18:</b> ${seg('total')}</div>`+
+    `<table class="tot" style="margin-top:8px"><thead><tr><th style="text-align:left">Player</th><th>Front</th><th>Back</th><th>Total</th><th>Nassau&nbsp;$</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
 // live preview of the round in progress (not yet archived)

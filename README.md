@@ -58,8 +58,9 @@ nine, back nine, and all 18** — each set to **$5 or $10**. Score it **by team*
 (teams compared on total net; lower net wins the segment) or **individually**
 (the low-net player wins the segment). Each segment settles once it's fully
 scored, and the money rolls into the results, ledger, and share summary. The
-**Results** panel also shows front / back / total **net** scores per player and
-team.
+Nassau tab shows a **per-player win/loss table** — each player's Front, Back,
+Total, and combined Nassau $ — plus the segment winners. The **Results** panel
+also shows front / back / total **net** scores per player and team.
 
 ## History, ledger & sharing
 
