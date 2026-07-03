@@ -57,6 +57,7 @@
   .arow .adate{font-weight:800;min-width:104px}
   .arow .ares{flex:1;min-width:150px;color:#333}
   .arow button{padding:5px 10px;font-size:12px}
+  .cur-head{font-weight:800;margin:16px 0 6px}
 
   /* ---------- scorecard grid ---------- */
   .tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
@@ -237,6 +238,7 @@
     </summary>
     <div class="panel-body">
       <table class="tot" id="ledgerTable"></table>
+      <div id="ledgerCurrent"></div>
       <div id="archiveList" class="archive-list"></div>
       <div class="btnrow">
         <button id="exportData">⤓ Export all data</button>
@@ -623,6 +625,8 @@ function recompute(){
 
   renderSummary(c);
   renderWad();
+  renderCurrentRound();
+  const ab=document.getElementById('archiveRound'); if(ab && ab.disabled){ ab.disabled=false; ab.textContent='🏁 Finish & archive'; }
   save();
 }
 
@@ -716,16 +720,41 @@ function archiveRound(){
   const now=new Date();
   r.label = now.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
   r.id = now.getTime();
-  state.archive.push(r); save(); renderHistory();
+  state.archive.push(r); save(); renderHistory(); renderCurrentRound();
+  const ab=document.getElementById('archiveRound'); if(ab){ ab.disabled=true; ab.textContent='✓ Archived'; }
   alert('Round archived — see “History & career ledger”.');
 }
 
+// recompute a stored round's per-player $ under the CURRENT settlement rules (so rule
+// changes apply retroactively to old archives, which only froze the round's facts)
+function roundLedgerRows(rd){
+  const n=rd.perPlayer.length, net=rd.hiLoTeam1||0, pot=rd.pot||0;
+  const hasWinner = rd.wadHolder && rd.perPlayer.some(pp=>pp.name===rd.wadHolder);
+  return rd.perPlayer.map(pp=>{
+    const hilo = pp.team===0 ? net : -net;                                   // each player carries the full team result
+    const wad  = hasWinner ? (pp.name===rd.wadHolder ? pot*(n-1) : -pot) : 0; // winner takes the full pot from each other
+    return { name:pp.name, hilo, wad, total:hilo+wad };
+  });
+}
 function ledger(){
   const m={};
-  state.archive.forEach(rd=> rd.perPlayer.forEach(pp=>{ const k=(pp.name||'').trim()||'—';
+  state.archive.forEach(rd=> roundLedgerRows(rd).forEach(pp=>{ const k=(pp.name||'').trim()||'—';
     if(!m[k]) m[k]={name:pp.name||'—',rounds:0,hilo:0,wad:0,total:0};
     m[k].rounds++; m[k].hilo+=pp.hilo; m[k].wad+=pp.wad; m[k].total+=pp.total; }));
   return Object.values(m).sort((a,b)=>b.total-a.total);
+}
+// live preview of the round in progress (not yet archived)
+function renderCurrentRound(){
+  const el=document.getElementById('ledgerCurrent'); if(!el) return;
+  const r=roundResults();
+  el.innerHTML =
+    `<div class="cur-head">Current round <span class="hint">— live, not archived yet</span></div>`+
+    `<table class="tot"><thead><tr><th style="text-align:left">Player</th><th>Hi-Lo</th><th>WAD</th><th>Total</th></tr></thead><tbody>`+
+    r.perPlayer.map(pp=>`<tr><td style="text-align:left">${escapeHtml(pp.name)}</td>`+
+      `<td class="${moneyClass(pp.hilo)}">${money2(pp.hilo)}</td>`+
+      `<td class="${moneyClass(pp.wad)}">${money2(pp.wad)}</td>`+
+      `<td class="${moneyClass(pp.total)}"><b>${money2(pp.total)}</b></td></tr>`).join('')+
+    `</tbody></table>`;
 }
 function renderHistory(){
   const led=ledger();

@@ -67,7 +67,12 @@ Everything lives in `index.html`:
   `ledger()` / `renderHistory()`)** — “Finish & archive” snapshots the round's
   per-player money (each player carries the full team Hi-Lo result; the WAD
   winner collects the full pot from every other player). The **History & career
-  ledger** panel totals each person across rounds.
+  ledger** panel totals each person across rounds. `ledger()` recomputes each
+  archived round's money from its stored facts under the *current* rules
+  (`roundLedgerRows`), so settlement-rule changes apply retroactively; a live
+  **Current round** preview (`renderCurrentRound`, refreshed in `recompute`)
+  shows the in-progress round before it's archived, and the archive button
+  guards against double-archiving.
   `roundSummaryText()` + `shareText()` drive “Share round” (Web Share API →
   clipboard → prompt); `exportData()` / `importData()` back up or restore the
   full `state` as JSON.

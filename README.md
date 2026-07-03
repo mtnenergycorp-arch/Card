@@ -60,7 +60,9 @@ scorecard lineup.
   round. The **History & career ledger** panel then shows a running **$ total
   per person** across every archived round. Each player carries the **full** team
   Hi-Lo result, and the **WAD winner collects the full pot from every other
-  player**. Each archived round can be re-shared or removed.
+  player**. A live **Current round** preview shows the in-progress totals before
+  you archive, and the ledger reflects the current settlement rules even for
+  previously-archived rounds. Each archived round can be re-shared or removed.
 - **Export / import.** Back up everything — rounds, roster, ledger — as a JSON
   file (or copy it) and restore it on another device, or hand it over to review.
 
