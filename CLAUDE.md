@@ -59,8 +59,17 @@ Everything lives in `index.html`:
 - **`calc()`** — the scoring engine. Computes net scores, the four point
   categories (low / high / greenie / net birdie), the sweep doubling, money
   won/lost, and the running total.
-- **Greenie** — a tap-to-cycle cell (none → Team 1 → Team 2 → none) handled by
-  a delegated `click` listener on `[data-greenie]`.
+- **Greenie** — a tap-to-cycle cell (none → each player → none) via a delegated
+  `click` on `[data-greenie]`; `state.greenie[hole]` holds the awarded **player
+  index** and `calc()` credits that player's team. Old team-based saves are
+  converted once via the `greenieByPlayer` flag.
+- **Rounds & ledger (`state.archive`, `roundResults()`, `archiveRound()`,
+  `ledger()` / `renderHistory()`)** — “Finish & archive” snapshots the round's
+  per-player money (Hi-Lo split evenly within each team; WAD pot as an equal
+  ante). The **History & career ledger** panel totals each person across rounds.
+  `roundSummaryText()` + `shareText()` drive “Share round” (Web Share API →
+  clipboard → prompt); `exportData()` / `importData()` back up or restore the
+  full `state` as JSON.
 - **`renderCard()` / `recompute()`** — DOM rendering. The scorecard is the
   **classic grid** (holes across the top, OUT/IN/TOT columns, players down a
   sticky left column under editable team-name bands). `renderCard()` builds the
@@ -91,9 +100,9 @@ Everything lives in `index.html`:
 - **Net (low man off scratch):** the lowest handicap plays off 0; the others
   receive the difference, allocated by stroke index (`playingHcaps`).
 - **Six points per hole:** **Low** (2 pts, lower *best* net), **High** (2 pts,
-  lower *worst* net), **Greenie** (1 pt, manually awarded in the `Greenie` row,
-  which shows the team name), and **Net birdie** (1 pt, best net under par,
-  head-to-head). Ties push, an unawarded greenie scores nothing.
+  lower *worst* net), **Greenie** (1 pt, manually awarded in the `Greenie` row
+  to a **player** — their team scores it), and **Net birdie** (1 pt, best net
+  under par, head-to-head). Ties push, an unawarded greenie scores nothing.
 - **Sweep:** if one team wins all six points outright, the hole doubles to
   **12** (`sweep` / `t1`/`t2` in `calc()`).
 - **Money:** (Team 1 points − Team 2 points) × that hole's bet. The running

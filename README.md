@@ -28,9 +28,9 @@ automatically on the device.
   cells with • dots; the small grey number in each box is the net score.
 - **High-Low, 6 points per hole.** Low (2 pts) to the team with the lower
   *best* net, High (2 pts) to the team with the lower *worst* net, Greenie
-  (1 pt, tap the **Greenie** row to award — it shows the team's name), and Net
-  birdie (1 pt, best net under par). Ties push. Win all six outright and the
-  hole **sweeps** — doubling to 12.
+  (1 pt, tap the **Greenie** row to award to the **player** who won it — their
+  team scores the point), and Net birdie (1 pt, best net under par). Ties push.
+  Win all six outright and the hole **sweeps** — doubling to 12.
 - **Money, presses & auto-press.** Base stake defaults to **$1 per point**;
   raise the bet on any hole and the higher stake carries through the rest of the
   round. From hole 10 the stake **auto-presses to the hole-9 value + $1** (the
@@ -50,6 +50,19 @@ whoever holed it — the hole is logged, so you can see **which hole each person
 wadded on** (e.g. "Cody — 2 wads · H3, H12") plus the full order. The current
 holder is highlighted, and there's **undo** and **reset**. Players come from the
 scorecard lineup.
+
+## History, ledger & sharing
+
+- **Share round.** In Results, tap **📤 Share round** to send a plain-text
+  summary (final money, each player's Hi-Lo + WAD + total, the WAD winner) via
+  your phone's share sheet, or copied to the clipboard.
+- **Archive & career ledger.** Tap **🏁 Finish & archive** to save a finished
+  round. The **History & career ledger** panel then shows a running **$ total
+  per person** across every archived round (Hi-Lo split evenly within each team;
+  the WAD pot treated as an equal ante). Each archived round can be re-shared or
+  removed.
+- **Export / import.** Back up everything — rounds, roster, ledger — as a JSON
+  file (or copy it) and restore it on another device, or hand it over to review.
 
 ## How High-Low works
 

@@ -51,6 +51,12 @@
   .wadbtn{background:var(--green);color:#fff;border-color:var(--green-d);font-weight:800;padding:7px 12px}
   #wadHole{padding:6px 8px;border:1px solid var(--line);border-radius:6px;font:inherit}
   .wad-hist{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.6;word-break:break-word}
+  /* history */
+  .archive-list{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+  .arow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fcfcf9;font-size:13px}
+  .arow .adate{font-weight:800;min-width:104px}
+  .arow .ares{flex:1;min-width:150px;color:#333}
+  .arow button{padding:5px 10px;font-size:12px}
 
   /* ---------- scorecard grid ---------- */
   .tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
@@ -189,6 +195,8 @@
         <table class="tot" id="sumTable"></table>
       </div>
       <div class="btnrow">
+        <button id="shareRound">📤 Share round</button>
+        <button id="archiveRound">🏁 Finish &amp; archive</button>
         <button class="primary" id="newRound">＋ New round (keep players)</button>
         <button class="warn" id="resetAll">↺ Reset everything</button>
       </div>
@@ -222,6 +230,25 @@
     </div>
   </details>
 
+  <!-- HISTORY & LEDGER -->
+  <details class="panel" id="historyPanel">
+    <summary class="panel-head">History &amp; career ledger
+      <span class="hint">running $ per person across archived rounds</span>
+    </summary>
+    <div class="panel-body">
+      <table class="tot" id="ledgerTable"></table>
+      <div id="archiveList" class="archive-list"></div>
+      <div class="btnrow">
+        <button id="exportData">⤓ Export all data</button>
+        <button id="importData">⤒ Import data</button>
+        <button id="clearHistory" class="warn">✕ Clear history</button>
+      </div>
+      <p class="hint">“Finish &amp; archive” (in Results) saves the current round here. Hi-Lo money is split evenly
+        within each team; the WAD pot is treated as an equal ante (winner takes it). <b>Export</b> copies all your
+        data — rounds, roster, ledger — so you can back it up, move devices, or send it to be reviewed.</p>
+    </div>
+  </details>
+
   <!-- RULES -->
   <details class="panel rules">
     <summary class="panel-head">How High-Low scoring works</summary>
@@ -230,7 +257,8 @@
         <li><b>Teams.</b> 2–6 players split into two teams. Each hole compares the teams’ best and worst
             net scores, so team sizes can be uneven.</li>
         <li><b>Six points per hole:</b> Low (2) — lower <i>best</i> net · High (2) — lower <i>worst</i> net ·
-            Greenie (1) — tap the <b>Greenie</b> row to award · Net birdie (1) — a team’s best net is under
+            Greenie (1) — tap the <b>Greenie</b> row to award to a player (their team gets the point) ·
+            Net birdie (1) — a team’s best net is under
             par and the other’s isn’t.</li>
         <li><b>Sweep = ×2.</b> Win all six points outright and the hole doubles to <b>12</b> (shown gold).</li>
         <li><b>Net — low man plays off scratch.</b> The lowest handicap in the group plays off 0 and everyone
@@ -292,7 +320,9 @@ function defaultState(){
     bets:   betSchedule(1),
     greenie:Array(18).fill(null),        // per hole: null = none, 0 = Team 1, 1 = Team 2
     scores: Array.from({length:18},()=>[null,null,null,null]),
-    wad: {start:5, hole:1, log:[]}       // WAD putting game: pot start, current hole, chronological log of {p, hole}
+    wad: {start:5, hole:1, log:[]},      // WAD putting game: pot start, current hole, chronological log of {p, hole}
+    greenieByPlayer: true,               // greenie stores a player index (not a team)
+    archive: []                          // finished rounds, for the career ledger
   };
 }
 
@@ -306,6 +336,11 @@ function load(){
       if(!s.wad || !Array.isArray(s.wad.log)) s.wad={start:5, hole:1, log:[]};
       else { if(s.wad.hole==null) s.wad.hole=1;
              s.wad.log = s.wad.log.map(e=> typeof e==="number" ? {p:e, hole:null} : e); }  // migrate old index-only log
+      if(!Array.isArray(s.archive)) s.archive=[];
+      if(!s.greenieByPlayer){                                    // migrate team-based greenie → a player on that team
+        s.greenie = s.greenie.map(g=>{ if(g==null) return null; const i=s.players.findIndex(p=>p.team===g); return i>=0?i:null; });
+        s.greenieByPlayer=true;
+      }
       if(s.courseVersion!==COURSE_VERSION){ s.course=DEFAULT_COURSE.map(h=>({...h})); s.courseVersion=COURSE_VERSION; }
       // adopt the $1 base / $2 back-nine default for rounds still on the old untouched $5 default
       const sched=(b,f)=>{const a=[];for(let i=0;i<18;i++)a.push(i>=9?f(b):b);return a;};
@@ -373,7 +408,8 @@ function calc(){
       const high = aHigh<bHigh? 0 : aHigh>bHigh? 1 : -1;
       const aBird=aLow<h.par, bBird=bLow<h.par;
       const bird = (aBird&&!bBird)?0 : (bBird&&!aBird)?1 : -1;
-      const grn  = (state.greenie[i]===0||state.greenie[i]===1) ? state.greenie[i] : -1;
+      const gp=state.greenie[i];                                  // greenie assigned to a player
+      const grn = (gp!=null && gp<n) ? state.players[gp].team : -1;
 
       let p1=(low===0?2:0)+(high===0?2:0)+(grn===0?1:0)+(bird===0?1:0);
       let p2=(low===1?2:0)+(high===1?2:0)+(grn===1?1:0)+(bird===1?1:0);
@@ -558,9 +594,10 @@ function recompute(){
       else { const net=v-st; nv.textContent=net; nv.className='netv'+(net<h.par?' under':''); if(nine) pgO[p]+=v; else pgI[p]+=v; }
     }
 
-    const gv=state.greenie[i], gc=document.getElementById('gr-'+i);
-    gc.className='grn'+(gv===0?' g1':gv===1?' g2':'');
-    gc.textContent = gv===0?state.team1name : gv===1?state.team2name : '–';
+    const gp=state.greenie[i], gc=document.getElementById('gr-'+i);
+    if(gp!=null && gp<n){ const tm=state.players[gp].team; gc.className='grn'+(tm===0?' g1':' g2');
+      gc.textContent=state.players[gp].name||('P'+(gp+1)); }
+    else { gc.className='grn'; gc.textContent='–'; }
 
     const r=c.holes[i]; if(r.played) anyPlayed=true;
     const ptc=document.getElementById('pt-'+i), hmc=document.getElementById('hm-'+i), rmc=document.getElementById('rm-'+i);
@@ -633,7 +670,92 @@ function removePlayer(idx){
   state.players.splice(idx,1);
   state.scores.forEach(row=>row.splice(idx,1));
   state.wad.log = state.wad.log.filter(e=>e.p!==idx).map(e=>({p:e.p>idx?e.p-1:e.p, hole:e.hole}));  // keep wad log aligned
+  state.greenie = state.greenie.map(gp=> gp==null?null : gp===idx?null : (gp>idx?gp-1:gp));           // keep greenie aligned
   renderCard(); renderWad(); recompute();
+}
+
+/* ---------- rounds: results, archive, career ledger, share/export ---------- */
+function money2(n){ const r=Math.round(n*100)/100; return (r<0?'-$':'$')+Math.abs(r).toLocaleString(undefined,{maximumFractionDigits:2}); }
+
+// per-player $ for the current round: Hi-Lo split evenly within each team + WAD pot as an equal ante
+function roundResults(){
+  const c=calc(), n=state.players.length;
+  const sizes=[0,0]; state.players.forEach(p=>sizes[p.team]++);
+  const share=[ sizes[0]? c.run/sizes[0]:0, sizes[1]? -c.run/sizes[1]:0 ];
+  const pot=wadPot(); let holder=-1;
+  for(let k=state.wad.log.length-1;k>=0;k--){ if(state.wad.log[k].p<n){ holder=state.wad.log[k].p; break; } }
+  const wadPer=Array(n).fill(0);
+  if(holder>=0 && n>1){ wadPer[holder]=pot*(n-1)/n; for(let i=0;i<n;i++) if(i!==holder) wadPer[i]=-pot/n; }
+  const perPlayer=state.players.map((p,i)=>{ const hilo=p.team===0?share[0]:share[1];
+    return { name:p.name||('Player '+(i+1)), team:p.team, hilo, wad:wadPer[i], total:hilo+wadPer[i] }; });
+  return { hiLoTeam1:c.run, tPts:c.tPts.slice(), team1name:state.team1name, team2name:state.team2name,
+    pot, wadHolder: holder>=0?(state.players[holder].name||('Player '+(holder+1))):null,
+    wadLog: state.wad.log.filter(e=>e.p<n).map(e=>({name:state.players[e.p].name||('P'+(e.p+1)), hole:e.hole})),
+    perPlayer };
+}
+
+function roundSummaryText(r){
+  const t1=r.team1name, t2=r.team2name, net=r.hiLoTeam1, L=[];
+  L.push('⛳ High-Low — Yellowstone CC (Blue tees)');
+  if(r.label) L.push(r.label);
+  L.push(net===0?'High-Low: all square':`High-Low: ${net>0?t1:t2} up ${money(Math.abs(net))} (points ${r.tPts[0]}–${r.tPts[1]})`);
+  r.perPlayer.forEach(pp=> L.push(`  • ${pp.name} [${pp.team===0?t1:t2}] Hi-Lo ${money2(pp.hilo)}${pp.wad?` · WAD ${money2(pp.wad)}`:''} · total ${money2(pp.total)}`));
+  if(r.wadHolder) L.push(`WAD: ${r.wadHolder} wins the ${money(r.pot)} pot`+(r.wadLog&&r.wadLog.length?` (${r.wadLog.map(e=>(e.hole?'H'+e.hole:'H?')+' '+e.name).join(', ')})`:''));
+  return L.join('\n');
+}
+async function shareText(text){
+  try{ if(navigator.share){ await navigator.share({text}); return; } }catch(e){ if(e && e.name==='AbortError') return; }
+  try{ await navigator.clipboard.writeText(text); alert('Copied to clipboard.'); return; }catch(e){}
+  window.prompt('Copy this:', text);
+}
+
+function archiveRound(){
+  const r=roundResults();
+  if(!confirm('Archive this round to your history & ledger?')) return;
+  const now=new Date();
+  r.label = now.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
+  r.id = now.getTime();
+  state.archive.push(r); save(); renderHistory();
+  alert('Round archived — see “History & career ledger”.');
+}
+
+function ledger(){
+  const m={};
+  state.archive.forEach(rd=> rd.perPlayer.forEach(pp=>{ const k=(pp.name||'').trim()||'—';
+    if(!m[k]) m[k]={name:pp.name||'—',rounds:0,hilo:0,wad:0,total:0};
+    m[k].rounds++; m[k].hilo+=pp.hilo; m[k].wad+=pp.wad; m[k].total+=pp.total; }));
+  return Object.values(m).sort((a,b)=>b.total-a.total);
+}
+function renderHistory(){
+  const led=ledger();
+  document.getElementById('ledgerTable').innerHTML = led.length
+    ? `<thead><tr><th style="text-align:left">Player</th><th>Rds</th><th>Hi-Lo</th><th>WAD</th><th>Total</th></tr></thead><tbody>`+
+      led.map(x=>`<tr><td style="text-align:left">${escapeHtml(x.name)}</td><td>${x.rounds}</td>`+
+        `<td class="${moneyClass(x.hilo)}">${money2(x.hilo)}</td><td class="${moneyClass(x.wad)}">${money2(x.wad)}</td>`+
+        `<td class="${moneyClass(x.total)}"><b>${money2(x.total)}</b></td></tr>`).join('')+`</tbody>`
+    : `<tbody><tr><td class="hint" style="padding:12px;text-align:left">No archived rounds yet — finish a round and tap “Finish &amp; archive”.</td></tr></tbody>`;
+  document.getElementById('archiveList').innerHTML = state.archive.slice().reverse().map(rd=>{
+    const net=rd.hiLoTeam1, res = net===0?'All square':`${escapeHtml(net>0?rd.team1name:rd.team2name)} +${money(Math.abs(net))}`;
+    const wad = rd.wadHolder?` · WAD ${escapeHtml(rd.wadHolder)} ${money(rd.pot)}`:'';
+    return `<div class="arow"><span class="adate">${escapeHtml(rd.label||'')}</span>`+
+      `<span class="ares">${res}${wad}</span>`+
+      `<button data-ashare="${rd.id}">Share</button><button class="warn" data-adel="${rd.id}">✕</button></div>`;
+  }).join('');
+}
+
+function exportData(){
+  const text=JSON.stringify(state);
+  try{ const url=URL.createObjectURL(new Blob([text],{type:'application/json'}));
+    const a=document.createElement('a'); a.href=url; a.download='yellowstone-highlow-data.json';
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }catch(e){}
+  shareText(text);
+}
+function importData(){
+  const txt=window.prompt('Paste exported data JSON (this replaces your current data):'); if(!txt) return;
+  try{ const s=JSON.parse(txt); if(!s || !s.players || !s.course) throw 0;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); state=load(); renderAll(); alert('Data imported.');
+  }catch(e){ alert('Could not import — that doesn’t look like valid exported data.'); }
 }
 
 /* ---------- events ---------- */
@@ -690,13 +812,18 @@ document.addEventListener("change", e=>{
 
 document.addEventListener("click", e=>{
   const g=e.target.closest('[data-greenie]');
-  if(g){ const i=+g.dataset.greenie; state.greenie[i]= state.greenie[i]==null?0 : state.greenie[i]===0?1 : null; recompute(); return; }
+  if(g){ const i=+g.dataset.greenie, n=state.players.length, cur=state.greenie[i];   // cycle none → each player → none
+    state.greenie[i] = (cur==null)?0 : (cur+1<n?cur+1:null); recompute(); return; }
   const tg=e.target.closest('[data-team]');
   if(tg){ const p=+tg.dataset.team; state.players[p].team = state.players[p].team===0?1:0; renderCard(); recompute(); return; }
   const del=e.target.closest('[data-del]');
   if(del && !del.disabled){ removePlayer(+del.dataset.del); return; }
   const rd=e.target.closest('[data-rdel]');
   if(rd){ state.roster.splice(+rd.dataset.rdel,1); renderRoster(); renderCard(); recompute(); return; }
+  const ash=e.target.closest('[data-ashare]');
+  if(ash){ const r=state.archive.find(x=>x.id===+ash.dataset.ashare); if(r) shareText(roundSummaryText(r)); return; }
+  const adl=e.target.closest('[data-adel]');
+  if(adl){ if(confirm('Remove this round from history?')){ state.archive=state.archive.filter(x=>x.id!==+adl.dataset.adel); save(); renderHistory(); } return; }
   const ws=e.target.closest('[data-wadstart]');
   if(ws){ state.wad.start=+ws.dataset.wadstart; renderWad(); save(); return; }
   const wb=e.target.closest('[data-wad]');
@@ -708,6 +835,16 @@ document.getElementById("wadReset").addEventListener("click",()=>{
   if(!confirm("Reset the WAD pot and clear all wads?")) return; state.wad.log=[]; renderWad(); save();
 });
 
+document.getElementById("shareRound").addEventListener("click",()=>{
+  const r=roundResults(); r.label=new Date().toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
+  shareText(roundSummaryText(r));
+});
+document.getElementById("archiveRound").addEventListener("click", archiveRound);
+document.getElementById("exportData").addEventListener("click", exportData);
+document.getElementById("importData").addEventListener("click", importData);
+document.getElementById("clearHistory").addEventListener("click",()=>{
+  if(!confirm("Clear ALL archived rounds and the ledger?")) return; state.archive=[]; save(); renderHistory();
+});
 document.getElementById("addRoster").addEventListener("click",()=>{
   state.roster.push({name:"New player", hcp:null}); renderRoster(); renderCard(); recompute();
 });
@@ -730,6 +867,7 @@ function renderAll(){
   renderRoster();
   renderCard();
   renderWad();
+  renderHistory();
   recompute();
 }
 renderAll();
