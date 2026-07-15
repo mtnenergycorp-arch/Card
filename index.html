@@ -207,7 +207,7 @@
       <div class="btnrow">
         <button id="shareRound">📤 Share round</button>
         <button id="archiveRound">🏁 Finish &amp; archive</button>
-        <button class="primary" id="newRound">＋ New round (keep players)</button>
+        <button class="primary" id="newRound">🔄 Reset round (keep history)</button>
         <button class="warn" id="resetAll">↺ Reset everything</button>
       </div>
     </div>
@@ -1008,7 +1008,7 @@ document.getElementById("addRoster").addEventListener("click",()=>{
 });
 document.getElementById("addPlayer").addEventListener("click", addPlayer);
 document.getElementById("newRound").addEventListener("click",()=>{
-  if(!confirm("Start a new round? Scores, bets and greenies clear; players, teams and course stay.")) return;
+  if(!confirm("Reset the scorecard for a new round?\n\nScores, bets, greenies and wads clear — but completed rounds and the running total (History & ledger) are kept. Archive first if you haven't.")) return;
   state.scores=Array.from({length:18},()=>Array(state.players.length).fill(null));
   state.bets=betSchedule(state.defaultBet);
   state.greenie=Array(18).fill(null);
