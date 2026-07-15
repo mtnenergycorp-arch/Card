@@ -761,11 +761,16 @@ function renderSummary(c){
 
 /* ---------- add / remove players ---------- */
 function addPlayer(){
-  if(state.players.length>=6) return;
+  if(state.players.length>=6){ alert('Six players max.'); return; }
+  const input=window.prompt('New player name:'); if(input===null) return;   // cancelled
+  const nm=input.trim();
   const c0=state.players.filter(p=>p.team===0).length, c1=state.players.filter(p=>p.team===1).length;
-  state.players.push({name:"Player "+(state.players.length+1), hcp:0, team: c0<=c1?0:1});
+  const rm = nm ? state.roster.find(r=>r.name.trim().toLowerCase()===nm.toLowerCase()) : null;
+  state.players.push({ name: nm || ('Player '+(state.players.length+1)),
+                       hcp: (rm && rm.hcp!=null) ? rm.hcp : 0, team: c0<=c1?0:1 });
   state.scores.forEach(row=>row.push(null));
-  renderCard(); recompute();
+  if(nm && !rm) state.roster.push({name:nm, hcp:null});          // remember a brand-new name in the roster
+  renderRoster(); renderCard(); recompute();
 }
 function removePlayer(idx){
   if(state.players.length<=2) return;

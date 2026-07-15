@@ -56,6 +56,8 @@ Everything lives in `index.html`:
   to a hole by stroke index. Supports handicaps above 18 (multiple strokes).
 - **`addPlayer()` / `removePlayer(idx)`** — grow/shrink the field (2–6), keeping
   every hole's score row aligned; new players auto-balance to the smaller team.
+  `addPlayer()` prompts for a name, remembers a brand-new name in the roster,
+  and pulls a saved handicap when the typed name matches a roster entry.
 - **`calc()`** — the scoring engine. Computes net scores, the four point
   categories (low / high / greenie / net birdie), the sweep doubling, money
   won/lost, and the running total.

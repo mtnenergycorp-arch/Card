@@ -12,8 +12,9 @@ automatically on the device.
 
 ## What it does
 
-- **2–6 players, two teams.** Add or remove players (✕), switch anyone's team
-  (⇄), and rename teams. Holes run across the top in the classic scorecard grid
+- **2–6 players, two teams.** **＋ Add player** asks for the name (typed in, and
+  saved to the roster); remove players (✕), switch anyone's team (⇄), and rename
+  teams. Holes run across the top in the classic scorecard grid
   with OUT / IN / TOT columns; players sit down the left under the team bands.
   Entering a score **auto-advances** to the next player on that hole (then to the
   next hole), so you can rattle through scores without tapping each box.
