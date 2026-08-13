@@ -82,18 +82,22 @@ handicap vs par — to see how close to par they finished.
 
 ## How High-Low works
 
-Six points are in play on every hole:
+Points scale with team size. Each team's net scores are sorted and compared
+**ball by ball** (rank by rank), each ball worth 2 points, plus a greenie and a
+net birdie:
 
 | Point | Value | Won by the team with the… |
 |-------|:-----:|----------------------------|
-| **Low**        | 2 | lower of the two teams' *best* net scores |
-| **High**       | 2 | lower of the two teams' *worst* net scores |
-| **Greenie**    | 1 | closest to the pin (awarded by hand in the **Grn** column) |
-| **Net birdie** | 1 | best net score under par (the other team's isn't) |
+| **Low ball**    | 2 | lower *best* net |
+| **Middle ball** | 2 | lower *middle* net — **3v3 only** |
+| **High ball**   | 2 | lower *worst* net |
+| **Greenie**     | 1 | player who got it (awarded in the **Greenie** row) |
+| **Net birdie**  | 1 | best net score under par (the other team's isn't) |
 
-Ties push (no points). **Win all six outright and the hole sweeps — the total
-doubles to 12.** The dollar move = (Team 1 points − Team 2 points) × that
-hole's bet, and the running total is shown from Team 1's perspective.
+So a **2v2 hole is worth 6 points, a 3v3 hole is worth 8** (uneven teams use low
++ high only). Ties push. **Win every point outright and the hole sweeps —
+doubling (12 in 2v2, 16 in 3v3).** The dollar move = (Team 1 − Team 2 points) ×
+that hole's bet, from Team 1's perspective.
 
 **Presses:** raise the bet on any hole and that higher stake stays for the rest
 of the round. There's an automatic press on hole 10 — from there the stake is

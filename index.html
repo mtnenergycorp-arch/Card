@@ -297,11 +297,10 @@
       <ul>
         <li><b>Teams.</b> 2–6 players split into two teams. Each hole compares the teams’ best and worst
             net scores, so team sizes can be uneven.</li>
-        <li><b>Six points per hole:</b> Low (2) — lower <i>best</i> net · High (2) — lower <i>worst</i> net ·
-            Greenie (1) — tap the <b>Greenie</b> row to award to a player (their team gets the point) ·
-            Net birdie (1) — a team’s best net is under
-            par and the other’s isn’t.</li>
-        <li><b>Sweep = ×2.</b> Win all six points outright and the hole doubles to <b>12</b> (shown gold).</li>
+        <li><b>Points per hole scale with team size:</b> each <b>ball</b> (rank) is worth 2 — low &amp; high in
+            2v2, low / middle / high in 3v3 — plus Greenie (1, tap the <b>Greenie</b> row to award to a player)
+            and Net birdie (1, a team’s best net under par when the other’s isn’t). So <b>2v2 = 6 points, 3v3 = 8</b>.</li>
+        <li><b>Sweep = ×2.</b> Win every point outright and the hole doubles (12 in 2v2, 16 in 3v3; shown gold).</li>
         <li><b>Net — low man plays off scratch.</b> The lowest handicap in the group plays off 0 and everyone
             else gets the <i>difference</i> (a 5 and a 10 become 0 and 5). Those strokes fall on the hardest
             holes by <b>S.I.</b>, shown as a <span style="background:var(--stroke);padding:0 4px;border-radius:3px">gold cell</span>
@@ -445,19 +444,24 @@ function calc(){
     const played = g.every(v=>v!=null) && t0.length>0 && t1.length>0;
     let r={i, nets, played:false, run};
     if(played){
-      const aLow=Math.min(...t0), bLow=Math.min(...t1);
-      const aHigh=Math.max(...t0), bHigh=Math.max(...t1);
-      const low  = aLow<bLow ? 0 : aLow>bLow ? 1 : -1;
-      const high = aHigh<bHigh? 0 : aHigh>bHigh? 1 : -1;
-      const aBird=aLow<h.par, bBird=bLow<h.par;
+      // one point-pair per "ball": sort each team's nets and compare rank-by-rank.
+      // equal teams → k balls (2v2 = low/high, 3v3 = low/middle/high); uneven → low+high only.
+      const s0=t0.slice().sort((a,b)=>a-b), s1=t1.slice().sort((a,b)=>a-b);
+      const balls=[];                          // per ball: 0 = Team 1 wins, 1 = Team 2, -1 = push
+      if(s0.length===s1.length){ for(let r0=0;r0<s0.length;r0++) balls.push(s0[r0]<s1[r0]?0:s0[r0]>s1[r0]?1:-1); }
+      else { const aL=s0[0],bL=s1[0],aH=s0[s0.length-1],bH=s1[s1.length-1];
+             balls.push(aL<bL?0:aL>bL?1:-1); balls.push(aH<bH?0:aH>bH?1:-1); }
+      const ballCount=balls.length;
+      const aBird=s0[0]<h.par, bBird=s1[0]<h.par;
       const bird = (aBird&&!bBird)?0 : (bBird&&!aBird)?1 : -1;
       const gp=state.greenie[i];                                  // greenie assigned to a player
       const grn = (gp!=null && gp<n) ? state.players[gp].team : -1;
 
-      let p1=(low===0?2:0)+(high===0?2:0)+(grn===0?1:0)+(bird===0?1:0);
-      let p2=(low===1?2:0)+(high===1?2:0)+(grn===1?1:0)+(bird===1?1:0);
-      const sweep = p1===6 ? 0 : p2===6 ? 1 : -1;
-      const t1pts = sweep===0?12:p1, t2pts = sweep===1?12:p2;
+      let p1=balls.reduce((a,w)=>a+(w===0?2:0),0)+(grn===0?1:0)+(bird===0?1:0);
+      let p2=balls.reduce((a,w)=>a+(w===1?2:0),0)+(grn===1?1:0)+(bird===1?1:0);
+      const maxPts=2*ballCount+2;              // 2v2 = 6, 3v3 = 8
+      const sweep = p1===maxPts ? 0 : p2===maxPts ? 1 : -1;
+      const t1pts = sweep===0?maxPts*2:p1, t2pts = sweep===1?maxPts*2:p2;
 
       const bet=num(state.bets[i])||0;
       const net=t1pts-t2pts;
@@ -465,7 +469,7 @@ function calc(){
       for(let p=0;p<n;p++){ if(state.players[p].team===0) tGross[0]+=g[p]; else tGross[1]+=g[p]; }
       tNet[0]+=t0.reduce((a,b)=>a+b,0); tNet[1]+=t1.reduce((a,b)=>a+b,0);
       tPts[0]+=t1pts; tPts[1]+=t2pts;
-      r={i, nets, played:true, low, high, grn, bird, aBird, bBird, t1:t1pts, t2:t2pts, net, sweep, bet, money:m, run};
+      r={i, nets, played:true, balls, grn, bird, aBird, bBird, t1:t1pts, t2:t2pts, net, sweep, bet, money:m, run};
     }
     holes.push(r);
   }
@@ -693,7 +697,9 @@ function recompute(){
     if(r.played){
       ptc.textContent=(r.net>0?'+':'')+r.net; ptc.className='pt '+moneyClass(r.net)+(r.sweep!==-1?' sweep':'');
       const bTag = r.bird===-1 ? ((r.aBird&&r.bBird)?'½':'·') : cat(r.bird);
-      ptc.title=`L:${cat(r.low)} H:${cat(r.high)} G:${cat(r.grn)} B:${bTag}${r.sweep!==-1?' — SWEEP ×2':''}`;
+      const bl = r.balls.length===2?['L','H'] : r.balls.length===3?['L','M','H'] : r.balls.map((_,k)=>'B'+(k+1));
+      const ballStr = r.balls.map((w,k)=>`${bl[k]}:${cat(w)}`).join(' ');
+      ptc.title=`${ballStr} G:${cat(r.grn)} B:${bTag}${r.sweep!==-1?' — SWEEP ×'+2:''}`;
       hmc.textContent= r.money===0?'$0':money(r.money); hmc.className='money '+moneyClass(r.money);
       if(nine){ ptO+=r.net; hmO+=r.money; } else { ptI+=r.net; hmI+=r.money; }
     } else {

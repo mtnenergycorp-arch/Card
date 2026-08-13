@@ -121,12 +121,14 @@ Everything lives in `index.html`:
   use each team's best/worst net regardless of size.
 - **Net (low man off scratch):** the lowest handicap plays off 0; the others
   receive the difference, allocated by stroke index (`playingHcaps`).
-- **Six points per hole:** **Low** (2 pts, lower *best* net), **High** (2 pts,
-  lower *worst* net), **Greenie** (1 pt, manually awarded in the `Greenie` row
-  to a **player** — their team scores it), and **Net birdie** (1 pt, best net
-  under par, head-to-head). Ties push, an unawarded greenie scores nothing.
-- **Sweep:** if one team wins all six points outright, the hole doubles to
-  **12** (`sweep` / `t1`/`t2` in `calc()`).
+- **Points per hole scale with team size:** each team's nets are sorted and
+  compared **rank-by-rank**, one **ball** per rank worth 2 pts (2v2 = low/high,
+  3v3 = low/middle/high; uneven teams fall back to low+high). Plus **Greenie**
+  (1 pt, awarded in the `Greenie` row to a **player** — their team scores it) and
+  **Net birdie** (1 pt, best net under par, head-to-head). So **2v2 = 6 points,
+  3v3 = 8** (`balls`/`maxPts` in `calc()`). Ties push.
+- **Sweep:** if one team wins every point outright (`p === maxPts`), the hole
+  doubles (`maxPts*2` — 12 in 2v2, 16 in 3v3).
 - **Money:** (Team 1 points − Team 2 points) × that hole's bet. The running
   **Total** is from Team 1's perspective (positive = Team 1 is up).
 - **Presses:** raising a hole's bet cascades that stake forward to the end of
