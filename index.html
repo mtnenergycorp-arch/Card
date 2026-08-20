@@ -300,7 +300,8 @@
         <li><b>Points per hole scale with team size:</b> each <b>ball</b> (rank) is worth 2 — low &amp; high in
             2v2, low / middle / high in 3v3 — plus Greenie (1, tap the <b>Greenie</b> row to award to a player)
             and Net birdie (1, a team’s best net under par when the other’s isn’t). So <b>2v2 = 6 points, 3v3 = 8</b>.</li>
-        <li><b>Sweep = ×2.</b> Win every point outright and the hole doubles (12 in 2v2, 16 in 3v3; shown gold).</li>
+        <li><b>Sweep = ×2.</b> Win every point outright <b>and</b> make a <b>natural (gross) birdie</b> — a
+            net birdie from a stroke won't sweep — and the hole doubles (12 in 2v2, 16 in 3v3; shown gold).</li>
         <li><b>Net — low man plays off scratch.</b> The lowest handicap in the group plays off 0 and everyone
             else gets the <i>difference</i> (a 5 and a 10 become 0 and 5). Those strokes fall on the hardest
             holes by <b>S.I.</b>, shown as a <span style="background:var(--stroke);padding:0 4px;border-radius:3px">gold cell</span>
@@ -459,8 +460,10 @@ function calc(){
 
       let p1=balls.reduce((a,w)=>a+(w===0?2:0),0)+(grn===0?1:0)+(bird===0?1:0);
       let p2=balls.reduce((a,w)=>a+(w===1?2:0),0)+(grn===1?1:0)+(bird===1?1:0);
+      const natBird=[false,false];             // a sweep requires a NATURAL (gross) birdie, not just a net one
+      for(let p=0;p<n;p++){ if(g[p]!=null && g[p]<h.par) natBird[state.players[p].team]=true; }
       const maxPts=2*ballCount+2;              // 2v2 = 6, 3v3 = 8
-      const sweep = p1===maxPts ? 0 : p2===maxPts ? 1 : -1;
+      const sweep = (p1===maxPts && natBird[0]) ? 0 : (p2===maxPts && natBird[1]) ? 1 : -1;
       const t1pts = sweep===0?maxPts*2:p1, t2pts = sweep===1?maxPts*2:p2;
 
       const bet=num(state.bets[i])||0;

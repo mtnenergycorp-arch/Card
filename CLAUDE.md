@@ -127,8 +127,9 @@ Everything lives in `index.html`:
   (1 pt, awarded in the `Greenie` row to a **player** — their team scores it) and
   **Net birdie** (1 pt, best net under par, head-to-head). So **2v2 = 6 points,
   3v3 = 8** (`balls`/`maxPts` in `calc()`). Ties push.
-- **Sweep:** if one team wins every point outright (`p === maxPts`), the hole
-  doubles (`maxPts*2` — 12 in 2v2, 16 in 3v3).
+- **Sweep:** if one team wins every point outright (`p === maxPts`) **and** made
+  a **natural (gross) birdie** on the hole (`natBird` — a net birdie from a stroke
+  doesn't qualify), the hole doubles (`maxPts*2` — 12 in 2v2, 16 in 3v3).
 - **Money:** (Team 1 points − Team 2 points) × that hole's bet. The running
   **Total** is from Team 1's perspective (positive = Team 1 is up).
 - **Presses:** raising a hole's bet cascades that stake forward to the end of
