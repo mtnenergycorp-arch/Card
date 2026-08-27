@@ -30,7 +30,7 @@ automatically on the device.
 - **High-Low, 6 points per hole.** Low (2 pts) to the team with the lower
   *best* net, High (2 pts) to the team with the lower *worst* net, Greenie
   (1 pt, tap the **Greenie** row to award to the **player** who won it — their
-  team scores the point), and Net birdie (1 pt, best net under par). Ties push.
+  team scores the point), and Birdie (1 pt, a natural gross birdie — no strokes). Ties push.
   Win all six outright and the hole **sweeps** — doubling to 12.
 - **Money, presses & auto-press.** Base stake defaults to **$1 per point**;
   raise the bet on any hole and the higher stake carries through the rest of the
@@ -82,9 +82,9 @@ handicap vs par — to see how close to par they finished.
 
 ## How High-Low works
 
-Points scale with team size. Each team's net scores are sorted and compared
+Points scale with team size. Each team's **net** scores are sorted and compared
 **ball by ball** (rank by rank), each ball worth 2 points, plus a greenie and a
-net birdie:
+**natural** (gross) birdie:
 
 | Point | Value | Won by the team with the… |
 |-------|:-----:|----------------------------|
@@ -92,7 +92,7 @@ net birdie:
 | **Middle ball** | 2 | lower *middle* net — **3v3 only** |
 | **High ball**   | 2 | lower *worst* net |
 | **Greenie**     | 1 | player who got it (awarded in the **Greenie** row) |
-| **Net birdie**  | 1 | best net score under par (the other team's isn't) |
+| **Birdie**      | 1 | a **natural (gross) birdie** — no strokes (the other team has none) |
 
 So a **2v2 hole is worth 6 points, a 3v3 hole is worth 8** (uneven teams use low
 + high only). Ties push. **Win every point outright and the hole sweeps —

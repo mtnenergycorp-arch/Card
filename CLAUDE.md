@@ -59,7 +59,7 @@ Everything lives in `index.html`:
   `addPlayer()` prompts for a name, remembers a brand-new name in the roster,
   and pulls a saved handicap when the typed name matches a roster entry.
 - **`calc()`** — the scoring engine. Computes net scores, the four point
-  categories (low / high / greenie / net birdie), the sweep doubling, money
+  categories (low / high / greenie / natural birdie), the sweep doubling, money
   won/lost, and the running total.
 - **Greenie** — a tap-to-cycle cell (none → each player → none) via a delegated
   `click` on `[data-greenie]`; `state.greenie[hole]` holds the awarded **player
@@ -125,8 +125,9 @@ Everything lives in `index.html`:
   compared **rank-by-rank**, one **ball** per rank worth 2 pts (2v2 = low/high,
   3v3 = low/middle/high; uneven teams fall back to low+high). Plus **Greenie**
   (1 pt, awarded in the `Greenie` row to a **player** — their team scores it) and
-  **Net birdie** (1 pt, best net under par, head-to-head). So **2v2 = 6 points,
-  3v3 = 8** (`balls`/`maxPts` in `calc()`). Ties push.
+  **Birdie** (1 pt, a **natural gross birdie** head-to-head — handicap strokes
+  don't count, `natBird`). So **2v2 = 6 points, 3v3 = 8** (`balls`/`maxPts` in
+  `calc()`). Ties push.
 - **Sweep:** if one team wins every point outright (`p === maxPts`) **and** made
   a **natural (gross) birdie** on the hole (`natBird` — a net birdie from a stroke
   doesn't qualify), the hole doubles (`maxPts*2` — 12 in 2v2, 16 in 3v3).
