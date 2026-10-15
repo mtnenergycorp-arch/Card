@@ -110,3 +110,13 @@ everyone else plays off the difference (so a 5 and a 10 become 0 and 5).
 
 A single, dependency-free `index.html` (HTML + CSS + vanilla JS). See
 [`CLAUDE.md`](CLAUDE.md) for the internal structure.
+
+## Individual points game (`teams5.html`)
+
+A separate card for an **every-man-for-himself** game (2–6 players, default 5).
+Each hole scores by **net finish** — 1st = 4 pts, 2nd = 3, 3rd = 2, 4th = 1
+(5th+ = 0), tied places split evenly. A **tie for 1st carries the whole hole's
+points to the next hole** (the pot keeps building until someone wins 1st
+outright). Every point is worth the hole's bet and its winner collects it from
+each other player, so totals net to zero. Scores are net (low man off scratch);
+a Net⁰ column shows each player's full-handicap net vs par.
