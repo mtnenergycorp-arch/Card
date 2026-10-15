@@ -32,11 +32,10 @@ automatically on the device.
   (1 pt, tap the **Greenie** row to award to the **player** who won it — their
   team scores the point), and Birdie (1 pt, a natural gross birdie — no strokes). Ties push.
   Win all six outright and the hole **sweeps** — doubling to 12.
-- **Money, presses & auto-press.** Base stake defaults to **$1 per point**;
+- **Money & presses.** Base stake defaults to **$0.25 per point**;
   raise the bet on any hole and the higher stake carries through the rest of the
-  round. From hole 10 the stake **auto-presses to the hole-9 value + $1** (the
-  back nine is always at least **$2**). The dollar move = (Team 1 − Team 2
-  points) × that hole's bet; the running **Total** shows who owes whom.
+  round. The dollar move = (Team 1 − Team 2 points) × that hole's bet; the
+  running **Total** shows who owes whom.
 - **Course data.** Blue tees, par 72, 72.2/145 — per-hole par, stroke index and
   yardage from the club's published men's Blue rating (31-Mar-2026). Edit any
   Yards / Par / S.I. cell if it ever changes.
@@ -99,9 +98,8 @@ So a **2v2 hole is worth 6 points, a 3v3 hole is worth 8** (uneven teams use low
 doubling (12 in 2v2, 16 in 3v3).** The dollar move = (Team 1 − Team 2 points) ×
 that hole's bet, from Team 1's perspective.
 
-**Presses:** raise the bet on any hole and that higher stake stays for the rest
-of the round. There's an automatic press on hole 10 — from there the stake is
-the hole-9 value plus $1 per point.
+**Presses:** every point is worth the bet (25¢ by default). Raise the bet on any
+hole and that higher stake stays for the rest of the round.
 
 **Net handicaps:** the lowest handicap in the group plays off scratch and
 everyone else plays off the difference (so a 5 and a 10 become 0 and 5).

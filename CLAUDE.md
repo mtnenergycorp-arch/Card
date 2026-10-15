@@ -31,10 +31,9 @@ Everything lives in `index.html`:
   yardage, **Blue tees**, par 72, 72.2/145), verified from the club's published
   men's Blue rating (31-Mar-2026). Editable inline. Bump `COURSE_VERSION` when
   these change so `load()` refreshes the course on already-saved rounds.
-- **`betSchedule(base)`** — builds the per-hole bet array: front nine at the
-  base stake, back nine auto-pressed to the **hole-9 value + 1** (the automatic
-  press on hole 10), floored at **$2**. Default base stake is **$1**. Used by
-  `defaultState`, the base-bet input, and "New round".
+- **`betSchedule(base)`** — builds the per-hole bet array: **flat**, every point
+  worth the base stake (default **$0.25**). Manual presses still cascade forward.
+  Used by `defaultState`, the base-bet input, and "New round".
 - **`defaultRoster()` / `state.roster` / `renderRoster()`** — the saved “Canes”
   roster (Cody, Chris, Darrin, Pat, Bryan), each `{name, hcp}`. A collapsible
   **Roster panel** (`#rosterEditor`) edits names/indexes directly
@@ -134,8 +133,8 @@ Everything lives in `index.html`:
 - **Money:** (Team 1 points − Team 2 points) × that hole's bet. The running
   **Total** is from Team 1's perspective (positive = Team 1 is up).
 - **Presses:** raising a hole's bet cascades that stake forward to the end of
-  the round (the `data-bet` handler writes `bets[i..17]`). The back nine
-  **auto-presses to the hole-9 value + 1** (see `betSchedule`).
+  the round (the `data-bet` handler writes `bets[i..17]`). The bet is otherwise
+  **flat at the base stake** (default $0.25/point); no automatic hole-10 press.
 - A hole only counts once every player has a score (and both teams are
   non-empty). Greenie is the only manual input (a per-hole `state.greenie`
   value: `null`/`0`/`1`).

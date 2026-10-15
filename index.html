@@ -160,12 +160,12 @@
   <div class="panel">
     <div class="panel-body">
       <div class="toolbar">
-        <label>Base bet&nbsp; $<input id="defaultBet" type="number" min="0" step="1" inputmode="numeric" value="1"></label>
+        <label>$ / point&nbsp; <input id="defaultBet" type="number" min="0" step="0.25" inputmode="decimal" value="0.25"></label>
         <button id="addPlayer">＋ Add player</button>
         <span class="hint"><b id="pcount">4</b> players (2–6)</span>
       </div>
-      <div class="hint">$ per point · front-nine stake; from hole 10 the stake is the hole-9 value <b>+ $1</b> ·
-        raise any hole to press from there on · use <b>⇄</b> to switch a player’s team, <b>✕</b> to remove.</div>
+      <div class="hint">Every point is worth this much (<b>25¢</b> by default) · raise the bet on any hole to
+        press from there on · use <b>⇄</b> to switch a player’s team, <b>✕</b> to remove.</div>
     </div>
   </div>
 
@@ -307,9 +307,8 @@
             else gets the <i>difference</i> (a 5 and a 10 become 0 and 5). Those strokes fall on the hardest
             holes by <b>S.I.</b>, shown as a <span style="background:var(--stroke);padding:0 4px;border-radius:3px">gold cell</span>
             with • dots. The “→N” by a handicap is the strokes that player receives; the small grey number is the net score.</li>
-        <li><b>Presses.</b> Raise the <b>Bet $</b> on any hole and that higher stake carries to the end of the
-            round. <b>Automatic press on hole 10</b> (gold edge): from hole 10 the stake is the hole-9 value + $1
-            (the back nine is always worth at least $2 per point).</li>
+        <li><b>Bet / presses.</b> Every point is worth the <b>Bet $</b> (<b>25¢</b> by default; change it in the
+            toolbar). Raise the bet on any hole and that higher stake carries to the end of the round.</li>
         <li><b>Money</b> = (Team 1 − Team 2 points) × that hole’s bet; <b>Running&nbsp;$</b> is from Team&nbsp;1’s
             perspective (positive = Team&nbsp;1 up). A hole counts once every player has a score.</li>
       </ul>
@@ -340,9 +339,8 @@ const DEFAULT_COURSE = [
   {par:5, si:14, yds:523}, {par:3, si:8,  yds:200}, {par:4, si:6,  yds:420}
 ];
 
-/* Bet schedule: front nine at the base stake; from hole 10 the stake is the hole-9 value + 1
-   (with a floor of 2 — the back nine is always worth at least $2 per point). */
-function betSchedule(base){ base=parseFloat(base)||0; const a=[]; for(let i=0;i<18;i++) a.push(i>=9?Math.max(base+1,2):base); return a; }
+/* Bet schedule: flat — every point is worth the base bet (default 25¢). Manual presses still carry forward. */
+function betSchedule(base){ base=parseFloat(base)||0; return Array(18).fill(base); }
 
 /* Saved roster ("the Canes"). Each player's handicap is remembered between rounds:
    set it once and picking that name later auto-fills it. */
@@ -351,7 +349,7 @@ function defaultRoster(){ return ['Cody','Chris','Darrin','Pat','Bryan'].map(nam
 function defaultState(){
   return {
     team1name:"Team 1", team2name:"Team 2",
-    defaultBet:1,
+    defaultBet:0.25,
     players:[
       {name:"Player 1", hcp:0, team:0}, {name:"Player 2", hcp:0, team:0},
       {name:"Player 3", hcp:0, team:1}, {name:"Player 4", hcp:0, team:1}
@@ -359,7 +357,7 @@ function defaultState(){
     roster: defaultRoster(),
     course: DEFAULT_COURSE.map(h=>({...h})),
     courseVersion: COURSE_VERSION,
-    bets:   betSchedule(1),
+    bets:   betSchedule(0.25),
     greenie:Array(18).fill(null),        // per hole: null = none, 0 = Team 1, 1 = Team 2
     scores: Array.from({length:18},()=>[null,null,null,null]),
     wad: {start:5, hole:1, log:[]},      // WAD putting game: pot start, current hole, chronological log of {p, hole}
@@ -386,12 +384,11 @@ function load(){
         s.greenieByPlayer=true;
       }
       if(s.courseVersion!==COURSE_VERSION){ s.course=DEFAULT_COURSE.map(h=>({...h})); s.courseVersion=COURSE_VERSION; }
-      // adopt the $1 base / $2 back-nine default for rounds still on the old untouched $5 default
+      // adopt the flat 25¢ default for rounds still on an old untouched default ($5 or $1 schedules)
       const sched=(b,f)=>{const a=[];for(let i=0;i<18;i++)a.push(i>=9?f(b):b);return a;};
-      if(s.defaultBet===5 && (JSON.stringify(s.bets)===JSON.stringify(sched(5,b=>b*2)) ||
-                              JSON.stringify(s.bets)===JSON.stringify(sched(5,b=>b+1)))){
-        s.defaultBet=1; s.bets=betSchedule(1);
-      }
+      const untouched5 = s.defaultBet===5 && (JSON.stringify(s.bets)===JSON.stringify(sched(5,b=>b*2)) || JSON.stringify(s.bets)===JSON.stringify(sched(5,b=>b+1)));
+      const untouched1 = s.defaultBet===1 && (JSON.stringify(s.bets)===JSON.stringify(sched(1,b=>Math.max(b+1,2))) || JSON.stringify(s.bets)===JSON.stringify(Array(18).fill(1)));
+      if(untouched5 || untouched1){ s.defaultBet=0.25; s.bets=betSchedule(0.25); }
       s.players.forEach((p,i)=>{ if(p.team==null) p.team = i < s.players.length/2 ? 0 : 1; });
       const n=s.players.length;            // keep each hole's score row aligned with player count
       s.scores = s.scores.map(row=>{ row=(row||[]).slice(0,n); while(row.length<n) row.push(null); return row; });
@@ -620,9 +617,7 @@ function playerRow(p){
 function betRow(){
   let h=`<tr class="betrow"><td class="lbl">Bet $</td>`;
   for(let i=0;i<18;i++){
-    const cls = i===9 ? 'betcell autopress' : 'betcell';
-    const title = i===9 ? ' title="Auto-press: from hole 10 the stake is the hole-9 value + $1"' : '';
-    h+=`<td class="${cls}"${title}><input class="cell bet" data-bet="${i}" type="number" inputmode="numeric" min="0" value="${state.bets[i]}"></td>`;
+    h+=`<td class="betcell"><input class="cell bet" data-bet="${i}" type="number" inputmode="decimal" min="0" step="0.25" value="${state.bets[i]}"></td>`;
     if(i===8) h+='<td class="sum"></td>';
     if(i===17) h+='<td class="sum"></td><td class="sum"></td>';
   }
