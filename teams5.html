@@ -111,12 +111,12 @@
 <main>
   <div class="panel"><div class="panel-body">
     <div class="toolbar">
-      <label>Bet&nbsp; $<input id="defaultBet" type="number" min="0" step="1" inputmode="numeric" value="1"></label>
+      <label>$ / point&nbsp; <input id="defaultBet" type="number" min="0" step="0.25" inputmode="decimal" value="0.25"></label>
       <button id="addPlayer">＋ Add player</button>
       <span class="hint"><b id="pcount">5</b> players (2–6)</span>
     </div>
-    <div class="hint">$ per point · front-nine stake; from hole 10 the stake is the hole-9 value <b>+ $1</b> ·
-      raise any hole to press from there on.</div>
+    <div class="hint">Every point is worth this much (<b>25¢</b> by default) · raise the bet on any hole and it
+      carries to the end of the round.</div>
   </div></div>
 
   <div class="panel">
@@ -188,8 +188,8 @@
         someone wins 1st outright.</li>
       <li><b>Money:</b> every point is worth that hole's bet, and each point's winner <b>collects it from every
         other player</b>. Totals always net to zero across the group.</li>
-      <li><b>Presses:</b> raise the Bet $ on a hole and it carries on; the back nine auto-presses to the
-        hole-9 value + $1 (min $2).</li>
+      <li><b>Bet:</b> every point is worth <b>25¢</b> by default (change it in the toolbar). Raise the bet on
+        any hole and that higher stake carries to the end of the round.</li>
     </ul></div>
   </details>
 </main>
@@ -209,14 +209,14 @@ const DEFAULT_COURSE = [
 ];
 const ROSTER = ['Cody','Chris','Darrin','Pat','Bryan'];
 const PV = [4,3,2,1];   // points for 1st, 2nd, 3rd, 4th (5th+ = 0)
-function betSchedule(base){ base=parseFloat(base)||0; const a=[]; for(let i=0;i<18;i++) a.push(i>=9?Math.max(base+1,2):base); return a; }
+function betSchedule(base){ base=parseFloat(base)||0; return Array(18).fill(base); }   // flat: every point worth the base bet
 
 function defaultState(){
   return {
-    defaultBet:1,
+    defaultBet:0.25,
     players: ROSTER.map(name=>({name, hcp:0})),
     course: DEFAULT_COURSE.map(h=>({...h})),
-    bets: betSchedule(1),
+    bets: betSchedule(0.25),
     greenie: Array(18).fill(null),       // player index awarded the greenie, or null
     scores: Array.from({length:18},()=>Array(5).fill(null)),
     wad: {start:5, hole:1, log:[]},      // WAD putting game
@@ -230,6 +230,9 @@ function load(){
       if(!Array.isArray(s.greenie)) s.greenie=Array(18).fill(null);
       if(!s.wad || !Array.isArray(s.wad.log)) s.wad={start:5,hole:1,log:[]}; else if(s.wad.hole==null) s.wad.hole=1;
       if(!s.nassau) s.nassau={on:false,front:5,back:5,total:5};
+      // adopt the 25¢ default for rounds still on the old untouched $1 schedule
+      if(s.defaultBet===1){ const oldA=[]; for(let i=0;i<18;i++) oldA.push(i>=9?2:1);
+        if(JSON.stringify(s.bets)===JSON.stringify(oldA) || JSON.stringify(s.bets)===JSON.stringify(Array(18).fill(1))){ s.defaultBet=0.25; s.bets=betSchedule(0.25); } }
       const n=s.players.length;
       s.scores=s.scores.map(row=>{ row=(row||[]).slice(0,n); while(row.length<n) row.push(null); return row; });
       return s;
@@ -396,8 +399,7 @@ function playerRow(p){
 function betRow(){
   let h=`<tr class="betrow"><td class="lbl">Bet $</td>`;
   for(let i=0;i<18;i++){
-    const cls=i===9?'betcell autopress':'betcell', title=i===9?' title="Auto-press: hole-9 value + $1"':'';
-    h+=`<td class="${cls}"${title}><input class="cell bet" data-bet="${i}" type="number" inputmode="numeric" min="0" value="${state.bets[i]}"></td>`;
+    h+=`<td class="betcell"><input class="cell bet" data-bet="${i}" type="number" inputmode="decimal" min="0" step="0.25" value="${state.bets[i]}"></td>`;
     if(i===8) h+='<td class="sum"></td>'; if(i===17) h+='<td class="sum"></td><td class="sum"></td>';
   }
   return h+'</tr>';
