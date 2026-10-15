@@ -80,6 +80,24 @@
   button.warn{color:#c62828} button:disabled{opacity:.4;cursor:default}
   button:active:not(:disabled){transform:translateY(1px)}
   .rules-body{font-size:13px;line-height:1.55} .rules-body li{margin:4px 0}
+  .wadstart{padding:6px 12px} .wadstart.on{background:var(--green);color:#fff;border-color:var(--green-d)}
+  .wad-top{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+  .wad-pot{font-size:15px} .wad-pot b{font-size:26px;color:var(--green-l);font-variant-numeric:tabular-nums}
+  .wad-start{font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center}
+  .wad-holder{font-size:13px}
+  .wad-rows{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
+  .wadrow{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:8px;padding:8px;background:#fcfcf9}
+  .wadrow.holder{border-color:var(--gold);box-shadow:inset 0 0 0 2px var(--gold);background:#fffdf2}
+  .wadname{font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .wadcount{font-size:12px;color:var(--muted);white-space:nowrap}
+  .wadbtn{background:var(--green);color:#fff;border-color:var(--green-d);font-weight:800;padding:7px 12px}
+  #wadHole{padding:6px 8px;border:1px solid var(--line);border-radius:6px;font:inherit}
+  .wad-hist{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.6;word-break:break-word}
+  .nassau-enable{font-weight:700;display:flex;gap:8px;align-items:center;cursor:pointer}
+  .nassau-enable input{width:18px;height:18px}
+  .nassau-row{display:flex;gap:6px;align-items:center;margin:8px 0;font-size:13px}
+  .nassau-row .nlbl{min-width:70px;color:var(--muted);font-weight:700}
+  #nassauResult{margin-top:6px;font-size:13px;line-height:1.6} .nassau-seg{margin-bottom:6px}
   footer{max-width:1200px;margin:0 auto;padding:8px 14px 30px;color:var(--muted);font-size:11.5px}
 </style>
 </head>
@@ -125,6 +143,38 @@
     </div>
   </div>
 
+  <details class="panel" id="wadPanel">
+    <summary class="panel-head">WAD — putting game <span class="hint">8′ putt takes the wad &amp; adds $1 · last wad wins the pot</span></summary>
+    <div class="panel-body">
+      <div class="wad-top">
+        <div class="wad-pot">Pot <b id="wadPot">$5</b></div>
+        <div class="wad-start">Start <button class="wadstart" data-wadstart="5">$5</button><button class="wadstart" data-wadstart="10">$10</button></div>
+        <div class="wad-start">Hole <select id="wadHole"></select></div>
+        <div class="wad-holder" id="wadHolder"></div>
+      </div>
+      <div id="wadRows" class="wad-rows"></div>
+      <div id="wadHist" class="wad-hist"></div>
+      <div class="btnrow"><button id="wadUndo">↶ Undo last wad</button><button id="wadReset" class="warn">↺ Reset pot</button></div>
+      <p class="hint">Set the <b>Hole</b>, then tap <b>Wad! 8′</b> for whoever sank the putt. Whoever holds the wad
+        at the end wins it — the winner collects the full pot from every other player, folded into the totals.</p>
+    </div>
+  </details>
+
+  <details class="panel" id="nassauPanel">
+    <summary class="panel-head">Nassau (optional) <span class="hint">front / back / total net bets — low net wins</span></summary>
+    <div class="panel-body">
+      <label class="nassau-enable"><input type="checkbox" id="nassauOn"> Enable Nassau</label>
+      <div id="nassauControls">
+        <div class="nassau-row"><span class="nlbl">Front $</span><button class="wadstart" data-nstake="front:5">$5</button><button class="wadstart" data-nstake="front:10">$10</button></div>
+        <div class="nassau-row"><span class="nlbl">Back $</span><button class="wadstart" data-nstake="back:5">$5</button><button class="wadstart" data-nstake="back:10">$10</button></div>
+        <div class="nassau-row"><span class="nlbl">Total $</span><button class="wadstart" data-nstake="total:5">$5</button><button class="wadstart" data-nstake="total:10">$10</button></div>
+      </div>
+      <div id="nassauResult"></div>
+      <p class="hint">Three net bets — front nine, back nine, all 18. Each is won by the <b>lowest net</b>, who
+        collects the stake from every other player. A segment settles once everyone has scored it.</p>
+    </div>
+  </details>
+
   <details class="panel"><summary class="panel-head">How this game scores</summary>
     <div class="panel-body rules-body"><ul>
       <li><b>Everyone for themselves.</b> Scores are <b>net</b> — the lowest handicap plays off scratch and
@@ -168,7 +218,9 @@ function defaultState(){
     course: DEFAULT_COURSE.map(h=>({...h})),
     bets: betSchedule(1),
     greenie: Array(18).fill(null),       // player index awarded the greenie, or null
-    scores: Array.from({length:18},()=>Array(5).fill(null))
+    scores: Array.from({length:18},()=>Array(5).fill(null)),
+    wad: {start:5, hole:1, log:[]},      // WAD putting game
+    nassau: {on:false, front:5, back:5, total:5}   // optional individual Nassau
   };
 }
 let state = load();
@@ -176,6 +228,8 @@ function load(){
   try{ const s=JSON.parse(localStorage.getItem(STORAGE_KEY));
     if(s && s.players && s.course && s.scores){
       if(!Array.isArray(s.greenie)) s.greenie=Array(18).fill(null);
+      if(!s.wad || !Array.isArray(s.wad.log)) s.wad={start:5,hole:1,log:[]}; else if(s.wad.hole==null) s.wad.hole=1;
+      if(!s.nassau) s.nassau={on:false,front:5,back:5,total:5};
       const n=s.players.length;
       s.scores=s.scores.map(row=>{ row=(row||[]).slice(0,n); while(row.length<n) row.push(null); return row; });
       return s;
@@ -236,6 +290,71 @@ function netByNine(hcaps){
   for(let i=0;i<18;i++){ const h=state.course[i];
     for(let p=0;p<n;p++){ const v=state.scores[i][p]; if(v==null) continue; const net=v-strokesFor(ph[p],h.si); if(i<9) f[p]+=net; else bk[p]+=net; } }
   return { f, bk, total:f.map((x,p)=>x+bk[p]) };
+}
+
+/* ---- WAD putting game (winner collects the full pot from every other player) ---- */
+function wadPot(){ return (num(state.wad.start)||0) + state.wad.log.length; }
+function wadName(p){ return escapeHtml((state.players[p]&&state.players[p].name)||('Player '+(p+1))); }
+function wadInfo(){
+  const n=state.players.length; let holder=-1, holderHole=null;
+  for(let k=state.wad.log.length-1;k>=0;k--){ if(state.wad.log[k].p<n){ holder=state.wad.log[k].p; holderHole=state.wad.log[k].hole; break; } }
+  const pot=wadPot(), m=Array(n).fill(0);
+  if(holder>=0 && n>1){ m[holder]=pot*(n-1); for(let i=0;i<n;i++) if(i!==holder) m[i]=-pot; }
+  return {holder, holderHole, pot, m};
+}
+function renderWad(){
+  const n=state.players.length, info=wadInfo();
+  document.getElementById('wadPot').textContent=money(info.pot);
+  document.querySelectorAll('.wadstart[data-wadstart]').forEach(b=>b.classList.toggle('on', +b.dataset.wadstart===state.wad.start));
+  const hsel=document.getElementById('wadHole');
+  if(hsel){ if(hsel.options.length!==18) hsel.innerHTML=Array.from({length:18},(_,i)=>`<option value="${i+1}">${i+1}</option>`).join(''); hsel.value=String(state.wad.hole||1); }
+  document.getElementById('wadHolder').innerHTML = info.holder<0
+    ? '<span class="hint">No wad yet — nobody has made an 8′ putt.</span>'
+    : `🏆 <b>${wadName(info.holder)}</b> has the wad${info.holderHole?` (hole ${info.holderHole})`:''} — wins ${money(info.pot*(n-1))} (${money(info.pot)} from each player)`;
+  const byP=state.players.map(()=>[]), counts=Array(n).fill(0);
+  state.wad.log.forEach(e=>{ if(e.p<n){ byP[e.p].push(e.hole); counts[e.p]++; } });
+  document.getElementById('wadRows').innerHTML = state.players.map((pl,p)=>{
+    const holes=byP[p].map(h=>h?('H'+h):'H?').join(', ');
+    return `<div class="wadrow${p===info.holder?' holder':''}"><span class="wadname">${escapeHtml(pl.name)||('Player '+(p+1))}</span>`+
+      `<span class="wadcount">${counts[p]} wad${counts[p]===1?'':'s'}${holes?' · '+holes:''}</span>`+
+      `<button class="wadbtn" data-wad="${p}">Wad! 8′</button></div>`;
+  }).join('');
+  const hist=document.getElementById('wadHist');
+  if(hist) hist.innerHTML = state.wad.log.length ? '<b>Order:</b> '+state.wad.log.map(e=>`${e.hole?'H'+e.hole:'H?'} ${wadName(e.p)}`).join(' → ') : '';
+}
+
+/* ---- individual Nassau: low net wins each segment, collects the stake from every other player ---- */
+function segDone(from,to){ const n=state.players.length; for(let i=from;i<to;i++) for(let p=0;p<n;p++) if(state.scores[i][p]==null) return false; return true; }
+function nassauResults(){
+  const N=state.nassau, n=state.players.length, per=Array(n).fill(0);
+  const perSeg=state.players.map(()=>({front:0,back:0,total:0}));
+  const seg={front:{winner:null,stake:N.front},back:{winner:null,stake:N.back},total:{winner:null,stake:N.total}};
+  if(!N.on) return {per,perSeg,seg,on:false};
+  const nb=netByNine(), done={front:segDone(0,9),back:segDone(9,18),total:segDone(0,18)}, vals={front:nb.f,back:nb.bk,total:nb.total};
+  function settle(k,values,isDone,stake){
+    if(!isDone||!stake||n<2) return;
+    let lo=Infinity, wi=-1, tie=false;
+    values.forEach((v,i)=>{ if(v<lo){lo=v;wi=i;tie=false;} else if(v===lo) tie=true; });
+    if(wi<0||tie){ seg[k].winner='Push'; return; }
+    seg[k].winner=state.players[wi].name||('P'+(wi+1));
+    values.forEach((v,i)=>{ const amt=(i===wi?stake*(n-1):-stake); per[i]+=amt; perSeg[i][k]=amt; });
+  }
+  settle('front',vals.front,done.front,N.front); settle('back',vals.back,done.back,N.back); settle('total',vals.total,done.total,N.total);
+  return {per,perSeg,seg,on:true};
+}
+function renderNassau(){
+  const N=state.nassau, n=state.players.length;
+  document.getElementById('nassauOn').checked=!!N.on;
+  document.getElementById('nassauControls').style.display=N.on?'':'none';
+  document.querySelectorAll('[data-nstake]').forEach(b=>{ const p=b.dataset.nstake.split(':'); b.classList.toggle('on', N[p[0]]===+p[1]); });
+  const res=document.getElementById('nassauResult'); if(!N.on){ res.innerHTML=''; return; }
+  const nr=nassauResults();
+  const seg=k=>{ const s=nr.seg[k]; return `${s.winner?escapeHtml(s.winner):'<span class="hint">pending</span>'} <span class="hint">$${s.stake}</span>`; };
+  const cell=v=> v?`<td class="${moneyClass(v)}">${money(v)}</td>`:`<td class="zero">—</td>`;
+  const rows=state.players.map((pl,i)=>{ const ps=nr.perSeg[i];
+    return `<tr><td style="text-align:left">${escapeHtml(pl.name||('P'+(i+1)))}</td>`+cell(ps.front)+cell(ps.back)+cell(ps.total)+`<td class="${moneyClass(nr.per[i])}"><b>${money(nr.per[i])}</b></td></tr>`; }).join('');
+  res.innerHTML=`<div class="nassau-seg">Winners — <b>Front:</b> ${seg('front')} · <b>Back:</b> ${seg('back')} · <b>Total&nbsp;18:</b> ${seg('total')}</div>`+
+    `<table class="tot" style="margin-top:8px"><thead><tr><th style="text-align:left">Player</th><th>Front</th><th>Back</th><th>Total</th><th>Nassau $</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
 /* ---------- render ---------- */
@@ -336,21 +455,24 @@ function recompute(){
   setTxt('yds-out',ydO); setTxt('yds-in',ydI); setTxt('yds-tot',ydO+ydI);
   setTxt('par-out',parO); setTxt('par-in',parI); setTxt('par-tot',parO+parI);
   for(let p=0;p<n;p++){ setTxt(`pg-${p}-out`,pgO[p]||''); setTxt(`pg-${p}-in`,pgI[p]||''); setTxt(`pg-${p}-tot`,(pgO[p]+pgI[p])||''); }
+  renderWad(); renderNassau();
   renderSummary(c);
   save();
 }
 
 function renderSummary(c){
   const n=state.players.length, anyPlayed=c.holes.some(h=>h.played);
-  const order=state.players.map((_,i)=>i).sort((a,b)=>c.pMoney[b]-c.pMoney[a]);
+  const wi=wadInfo(), nr=nassauResults();
+  const grand=state.players.map((_,p)=> c.pMoney[p] + wi.m[p] + nr.per[p]);
+  const order=state.players.map((_,i)=>i).sort((a,b)=>grand[b]-grand[a]);
   const top=order[0];
   const lead=document.getElementById('leader');
   lead.textContent = !anyPlayed ? 'No scores yet'
-    : (c.pMoney[top]>0 ? `${state.players[top].name||('P'+(top+1))} leads ${money(c.pMoney[top])}` : 'All even');
+    : (grand[top]>0 ? `${state.players[top].name||('P'+(top+1))} leads ${money(grand[top])}` : 'All even');
 
   document.getElementById('standingCard').innerHTML = !anyPlayed
     ? `<div class="who">Enter scores to see the standings</div><div class="big zero">—</div>`
-    : `<div class="who">Leader</div><div class="big ${moneyClass(c.pMoney[top])}">${escapeHtml(state.players[top].name||('P'+(top+1)))} ${money(c.pMoney[top])}</div><div class="who">${fmtPts(c.pPts[top])} pts</div>`;
+    : `<div class="who">Leader (all games)</div><div class="big ${moneyClass(grand[top])}">${escapeHtml(state.players[top].name||('P'+(top+1)))} ${money(grand[top])}</div><div class="who">${fmtPts(c.pPts[top])} pts</div>`;
 
   const cb=document.getElementById('carryBar');
   if(c.carryOut>0){ cb.style.display='block'; cb.textContent=`🎯 Carryover active — the next hole is worth ×${1+c.carryOut} points (a tie for 1st kept rolling the pot).`; }
@@ -361,10 +483,13 @@ function renderSummary(c){
   for(let i=0;i<18;i++) for(let p=0;p<n;p++) if(state.scores[i][p]!=null) parPlayed[p]+=state.course[i].par;
   const vsPar=p=>{ const fn=full.total[p]; if(!fn) return '—'; const d=fn-parPlayed[p]; return `${fn} (${d>0?'+'+d:d<0?d:'E'})`; };
   const rows=order.map(p=>`<tr><td style="text-align:left">${escapeHtml(state.players[p].name||('P'+(p+1)))}</td>`+
-    `<td>${c.pGross[p]||'—'}</td><td>${c.pNet[p]||'—'}</td><td>${vsPar(p)}</td><td>${fmtPts(c.pPts[p])}</td>`+
-    `<td class="${moneyClass(c.pMoney[p])}"><b>${money(c.pMoney[p])}</b></td></tr>`).join('');
+    `<td>${c.pNet[p]||'—'}</td><td>${vsPar(p)}</td><td>${fmtPts(c.pPts[p])}</td>`+
+    `<td class="${moneyClass(c.pMoney[p])}">${money(c.pMoney[p])}</td>`+
+    `<td class="${moneyClass(wi.m[p])}">${money(wi.m[p])}</td>`+
+    `<td class="${moneyClass(nr.per[p])}">${money(nr.per[p])}</td>`+
+    `<td class="${moneyClass(grand[p])}"><b>${money(grand[p])}</b></td></tr>`).join('');
   document.getElementById('sumTable').innerHTML =
-    `<thead><tr><th style="text-align:left">Player</th><th>Gross</th><th>Net</th><th>Net⁰ /par</th><th>Pts</th><th>$ Total</th></tr></thead><tbody>${rows}</tbody>`;
+    `<thead><tr><th style="text-align:left">Player</th><th>Net</th><th>Net⁰/par</th><th>Pts</th><th>Points$</th><th>WAD</th><th>Nassau</th><th>Total</th></tr></thead><tbody>${rows}</tbody>`;
 }
 
 function addPlayer(){
@@ -378,6 +503,7 @@ function removePlayer(idx){
   if(state.players.length<=2) return;
   state.players.splice(idx,1); state.scores.forEach(row=>row.splice(idx,1));
   state.greenie=state.greenie.map(gp=> gp==null?null : gp===idx?null : (gp>idx?gp-1:gp));
+  state.wad.log=state.wad.log.filter(e=>e.p!==idx).map(e=>({p:e.p>idx?e.p-1:e.p, hole:e.hole}));
   renderCard(); recompute();
 }
 
@@ -407,27 +533,40 @@ document.addEventListener("input", e=>{
 });
 document.addEventListener("change", e=>{
   const d=e.target.dataset;
-  if(d.pick!=null){ const ri=e.target.value; if(ri==="") return; state.players[+d.pick].name=ROSTER[+ri]; renderCard(); recompute(); }
+  if(d.pick!=null){ const ri=e.target.value; if(ri==="") return; state.players[+d.pick].name=ROSTER[+ri]; renderCard(); recompute(); return; }
+  if(e.target.id==="wadHole"){ state.wad.hole=+e.target.value; save(); return; }
+  if(e.target.id==="nassauOn"){ state.nassau.on=e.target.checked; recompute(); return; }
 });
 document.addEventListener("click", e=>{
   const g=e.target.closest('[data-greenie]');
   if(g){ const i=+g.dataset.greenie, n=state.players.length, cur=state.greenie[i];   // cycle none → each player → none
     state.greenie[i]=(cur==null)?0:(cur+1<n?cur+1:null); recompute(); return; }
+  const ws=e.target.closest('[data-wadstart]');
+  if(ws){ state.wad.start=+ws.dataset.wadstart; recompute(); return; }
+  const wb=e.target.closest('[data-wad]');
+  if(wb){ state.wad.log.push({p:+wb.dataset.wad, hole:state.wad.hole||null}); recompute(); return; }
+  const nst=e.target.closest('[data-nstake]');
+  if(nst){ const pp=nst.dataset.nstake.split(':'); state.nassau[pp[0]]=+pp[1]; recompute(); return; }
   const del=e.target.closest('[data-del]');
   if(del && !del.disabled){ removePlayer(+del.dataset.del); return; }
 });
+document.getElementById("wadUndo").addEventListener("click",()=>{ state.wad.log.pop(); recompute(); });
+document.getElementById("wadReset").addEventListener("click",()=>{ if(!confirm("Reset the WAD pot and clear all wads?")) return; state.wad.log=[]; recompute(); });
 document.getElementById("addPlayer").addEventListener("click", addPlayer);
 document.getElementById("newRound").addEventListener("click",()=>{
   if(!confirm("Reset the scorecard? Scores, bets and greenies clear; players stay.")) return;
   state.scores=Array.from({length:18},()=>Array(state.players.length).fill(null));
-  state.bets=betSchedule(state.defaultBet); state.greenie=Array(18).fill(null);
+  state.bets=betSchedule(state.defaultBet); state.greenie=Array(18).fill(null); state.wad.log=[];
   renderCard(); recompute();
 });
 document.getElementById("shareRound").addEventListener("click", async ()=>{
-  const c=calc();
-  const order=state.players.map((_,i)=>i).sort((a,b)=>c.pMoney[b]-c.pMoney[a]);
+  const c=calc(), wi=wadInfo(), nr=nassauResults();
+  const grand=state.players.map((_,p)=> c.pMoney[p]+wi.m[p]+nr.per[p]);
+  const order=state.players.map((_,i)=>i).sort((a,b)=>grand[b]-grand[a]);
   const L=['⛳ Points game (individual) — Yellowstone CC', new Date().toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})];
-  order.forEach(p=>L.push(`  ${state.players[p].name||('P'+(p+1))}: ${money(c.pMoney[p])} (${fmtPts(c.pPts[p])} pts)`));
+  order.forEach(p=>{ const extra=[]; if(wi.m[p]) extra.push('WAD '+money(wi.m[p])); if(nr.per[p]) extra.push('Nassau '+money(nr.per[p]));
+    L.push(`  ${state.players[p].name||('P'+(p+1))}: ${money(grand[p])}  (pts ${money(c.pMoney[p])}${extra.length?' · '+extra.join(' · '):''})`); });
+  if(wi.holder>=0) L.push(`  WAD: ${wadName(wi.holder)} holds the ${money(wi.pot)} pot`);
   if(c.carryOut>0) L.push(`  (carryover active: next hole ×${1+c.carryOut})`);
   const text=L.join('\n');
   try{ if(navigator.share){ await navigator.share({text}); return; } }catch(e){ if(e&&e.name==='AbortError') return; }

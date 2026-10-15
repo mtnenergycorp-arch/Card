@@ -121,4 +121,7 @@ outright). A **natural (gross) birdie** is +1 to that player and a **greenie**
 (tap the Greenie row) is +1 — both awarded every hole, carry or not. Every point
 is worth the hole's bet and its winner collects it from each other player, so
 totals net to zero. Scores are net (low man off scratch); a Net⁰ column shows
-each player's full-handicap net vs par.
+each player's full-handicap net vs par. The card also includes **WAD** (the
+8′-putt pot — last wad wins, collected from each player) and an optional
+individual **Nassau** (front / back / total net bets, low net wins each and
+collects from the field); both fold into each player's grand Total.
