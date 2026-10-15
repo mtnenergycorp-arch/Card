@@ -55,8 +55,11 @@
   .sc .netv{position:absolute;bottom:1px;right:3px;font-size:9px;color:#999;line-height:1;z-index:1;pointer-events:none}
   .sc .netv.under{color:var(--green-l);font-weight:800}
   .sc .ptscell{font-size:10px;color:var(--accent);position:absolute;top:1px;right:3px;line-height:1;z-index:1;pointer-events:none;font-weight:800}
-  .sc .betrow td{height:32px;background:#fcfbf6}
+  .sc .betrow td,.sc .grnrow td{height:32px;background:#fcfbf6}
   .sc input.cell.bet{font-size:12px}
+  .sc td.grn{cursor:pointer;font-weight:700;font-size:10px;user-select:none;-webkit-user-select:none;color:#bbb;padding:1px 2px;word-break:break-word}
+  .sc td.grn.on{background:#e3edfb;color:var(--accent)}
+  .sc td.scorecell.bird input.score{color:var(--green-l)}
   .sc td.betcell.autopress{box-shadow:inset 4px 0 0 var(--gold);background:#fdf7e3}
   .sc .winrow td{font-weight:800;font-size:11px;background:#f4f1e6;color:#333;line-height:1.1}
   .sc .winrow td.carry{background:#fff3cf;color:#9a7b00}
@@ -128,8 +131,11 @@
         everyone else off the difference; strokes fall on the hardest holes by stroke index (gold cells • dots).</li>
       <li><b>Each hole scores by finish:</b> <b>1st = 4 pts, 2nd = 3, 3rd = 2, 4th = 1</b> (5th+ = 0). Players
         tied for a place split those places' points evenly.</li>
-      <li><b>Tie for 1st → carry.</b> If two or more share the low net, <b>no points are awarded and the whole
-        hole's points roll onto the next hole</b> (the pot keeps building until someone wins 1st outright).</li>
+      <li><b>Bonuses (don't carry):</b> a <b>natural (gross) birdie</b> is +1 to that player, and a <b>greenie</b>
+        (tap the Greenie row to award) is +1 — awarded every hole regardless of a carry.</li>
+      <li><b>Tie for 1st → carry.</b> If two or more share the low net, <b>no finish points are awarded and the
+        whole hole's finish points roll onto the next hole</b> (greenie/birdie still score). The pot builds until
+        someone wins 1st outright.</li>
       <li><b>Money:</b> every point is worth that hole's bet, and each point's winner <b>collects it from every
         other player</b>. Totals always net to zero across the group.</li>
       <li><b>Presses:</b> raise the Bet $ on a hole and it carries on; the back nine auto-presses to the
@@ -161,6 +167,7 @@ function defaultState(){
     players: ROSTER.map(name=>({name, hcp:0})),
     course: DEFAULT_COURSE.map(h=>({...h})),
     bets: betSchedule(1),
+    greenie: Array(18).fill(null),       // player index awarded the greenie, or null
     scores: Array.from({length:18},()=>Array(5).fill(null))
   };
 }
@@ -168,6 +175,7 @@ let state = load();
 function load(){
   try{ const s=JSON.parse(localStorage.getItem(STORAGE_KEY));
     if(s && s.players && s.course && s.scores){
+      if(!Array.isArray(s.greenie)) s.greenie=Array(18).fill(null);
       const n=s.players.length;
       s.scores=s.scores.map(row=>{ row=(row||[]).slice(0,n); while(row.length<n) row.push(null); return row; });
       return s;
@@ -211,6 +219,8 @@ function calc(){
           const share=(sum/size)*sets; for(let q=pos;q<=end;q++) pts[idx[q]]=share; pos=end+1; }
         carry=0;
       }
+      const gp=state.greenie[i]; if(gp!=null && gp<n) pts[gp]+=1;            // greenie bonus (+1, doesn't carry)
+      for(let p=0;p<n;p++){ if(g[p]<h.par) pts[p]+=1; }                      // natural (gross) birdie bonus (+1 each)
       const total=pts.reduce((a,b)=>a+b,0), bet=num(state.bets[i])||0;
       const mny=pts.map(pp=> (pp*n - total)*bet);         // each point's winner collects the bet from every other player
       for(let p=0;p<n;p++){ pPts[p]+=pts[p]; pMoney[p]+=mny[p]; }
@@ -273,6 +283,12 @@ function betRow(){
   }
   return h+'</tr>';
 }
+function greenieRow(){
+  let h=`<tr class="grnrow"><td class="lbl">Greenie</td>`;
+  for(let i=0;i<18;i++){ h+=`<td class="grn" id="gr-${i}" data-greenie="${i}">–</td>`;
+    if(i===8) h+='<td class="sum"></td>'; if(i===17) h+='<td class="sum"></td><td class="sum"></td>'; }
+  return h+'</tr>';
+}
 function winRow(){
   let h=`<tr class="winrow"><td class="lbl">Winner</td>`;
   for(let i=0;i<18;i++){ h+=`<td id="win-${i}"></td>`;
@@ -283,7 +299,7 @@ function renderCard(){
   document.getElementById('cardHead').innerHTML=headHTML();
   let body=metaRow('Yards','yds',true)+metaRow('Par','par',true)+metaRow('S.I.','si',false);
   state.players.forEach((pl,p)=>body+=playerRow(p));
-  body+=betRow()+winRow();
+  body+=greenieRow()+betRow()+winRow();
   document.getElementById('cardBody').innerHTML=body;
   const pc=document.getElementById('pcount'); if(pc) pc.textContent=state.players.length;
   const ap=document.getElementById('addPlayer'); if(ap) ap.disabled=state.players.length>=6;
@@ -302,13 +318,16 @@ function recompute(){
       const cell=document.getElementById(`sc-${i}-${p}`), dot=document.getElementById(`dot-${i}-${p}`),
             nv=document.getElementById(`net-${i}-${p}`), pc=document.getElementById(`pts-${i}-${p}`);
       if(!cell) continue;
-      cell.classList.remove('stroke','stroke2','win');
+      cell.classList.remove('stroke','stroke2','win','bird');
       if(st>0){ cell.classList.add(st>=2?'stroke2':'stroke'); dot.textContent='•'.repeat(Math.min(st,3)); } else dot.textContent='';
       const v=state.scores[i][p];
-      if(v==null){ nv.textContent=''; nv.className='netv'; } else { const net=v-st; nv.textContent=net; nv.className='netv'+(net<h.par?' under':''); if(nine) pgO[p]+=v; else pgI[p]+=v; }
+      if(v==null){ nv.textContent=''; nv.className='netv'; }
+      else { const net=v-st; nv.textContent=net; nv.className='netv'+(net<h.par?' under':''); if(v<h.par) cell.classList.add('bird'); if(nine) pgO[p]+=v; else pgI[p]+=v; }
       // points earned in-cell
       if(r.played && r.pts[p]>0){ pc.textContent=fmtPts(r.pts[p]); if(p===r.winner) cell.classList.add('win'); } else pc.textContent='';
     }
+    const gp=state.greenie[i], gc=document.getElementById('gr-'+i);
+    if(gc){ if(gp!=null && gp<n){ gc.className='grn on'; gc.textContent=initials(state.players[gp].name,gp); } else { gc.className='grn'; gc.textContent='–'; } }
     const wc=document.getElementById('win-'+i);
     if(!r.played){ wc.textContent=''; wc.className=''; }
     else if(r.tie1){ wc.textContent='carry ▸ ×'+(r.sets+1); wc.className='carry'; }
@@ -358,6 +377,7 @@ function addPlayer(){
 function removePlayer(idx){
   if(state.players.length<=2) return;
   state.players.splice(idx,1); state.scores.forEach(row=>row.splice(idx,1));
+  state.greenie=state.greenie.map(gp=> gp==null?null : gp===idx?null : (gp>idx?gp-1:gp));
   renderCard(); recompute();
 }
 
@@ -390,14 +410,17 @@ document.addEventListener("change", e=>{
   if(d.pick!=null){ const ri=e.target.value; if(ri==="") return; state.players[+d.pick].name=ROSTER[+ri]; renderCard(); recompute(); }
 });
 document.addEventListener("click", e=>{
+  const g=e.target.closest('[data-greenie]');
+  if(g){ const i=+g.dataset.greenie, n=state.players.length, cur=state.greenie[i];   // cycle none → each player → none
+    state.greenie[i]=(cur==null)?0:(cur+1<n?cur+1:null); recompute(); return; }
   const del=e.target.closest('[data-del]');
   if(del && !del.disabled){ removePlayer(+del.dataset.del); return; }
 });
 document.getElementById("addPlayer").addEventListener("click", addPlayer);
 document.getElementById("newRound").addEventListener("click",()=>{
-  if(!confirm("Reset the scorecard? Scores and bets clear; players stay.")) return;
+  if(!confirm("Reset the scorecard? Scores, bets and greenies clear; players stay.")) return;
   state.scores=Array.from({length:18},()=>Array(state.players.length).fill(null));
-  state.bets=betSchedule(state.defaultBet);
+  state.bets=betSchedule(state.defaultBet); state.greenie=Array(18).fill(null);
   renderCard(); recompute();
 });
 document.getElementById("shareRound").addEventListener("click", async ()=>{
