@@ -121,15 +121,16 @@ Everything lives in `index.html`:
 - **Net (low man off scratch):** the lowest handicap plays off 0; the others
   receive the difference, allocated by stroke index (`playingHcaps`).
 - **Points per hole scale with team size:** each team's nets are sorted and
-  compared **rank-by-rank**, one **ball** per rank worth 2 pts (2v2 = low/high,
-  3v3 = low/middle/high; uneven teams fall back to low+high). Plus **Greenie**
-  (1 pt, awarded in the `Greenie` row to a **player** — their team scores it) and
-  **Birdie** (1 pt, a **natural gross birdie** head-to-head — handicap strokes
-  don't count, `natBird`). So **2v2 = 6 points, 3v3 = 8** (`balls`/`maxPts` in
-  `calc()`). Ties push.
+  compared **rank-by-rank** for the lowest `ranks` balls — **2v2 = low/high,
+  3v3 = low/middle** (`ranks = team===3 ? 2 : team`, so in 3v3 the **worst net is
+  thrown out**); uneven teams fall back to low+high. Each ball is worth 2 pts.
+  Plus **Greenie** (1 pt, awarded in the `Greenie` row to a **player** — their
+  team scores it) and **Birdie** (1 pt, a **natural gross birdie** head-to-head —
+  handicap strokes don't count, `natBird`). So **2v2 = 6 points, 3v3 = 6**
+  (`balls`/`maxPts` in `calc()`, `maxPts = 2*ballCount + 2`). Ties push.
 - **Sweep:** if one team wins every point outright (`p === maxPts`) **and** made
   a **natural (gross) birdie** on the hole (`natBird` — a net birdie from a stroke
-  doesn't qualify), the hole doubles (`maxPts*2` — 12 in 2v2, 16 in 3v3).
+  doesn't qualify), the hole doubles (`maxPts*2` — 12 in both 2v2 and 3v3).
 - **Money:** (Team 1 points − Team 2 points) × that hole's bet. The running
   **Total** is from Team 1's perspective (positive = Team 1 is up).
 - **Presses:** raising a hole's bet cascades that stake forward to the end of

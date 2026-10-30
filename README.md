@@ -27,8 +27,9 @@ automatically on the device.
   plays off 0 and everyone else gets the difference (a 5 and a 10 become 0 and
   5). Those strokes land on the hardest holes by stroke index — shown as gold
   cells with • dots; the small grey number in each box is the net score.
-- **High-Low, 6 points per hole.** Low (2 pts) to the team with the lower
-  *best* net, High (2 pts) to the team with the lower *worst* net, Greenie
+- **High-Low, 6 points per hole.** In 2v2: Low (2 pts) to the team with the lower
+  *best* net and High (2 pts) to the team with the lower *worst* net. In 3v3 the
+  two balls are Low + **Middle** (the worst net is thrown out). Plus Greenie
   (1 pt, tap the **Greenie** row to award to the **player** who won it — their
   team scores the point), and Birdie (1 pt, a natural gross birdie — no strokes). Ties push.
   Win all six outright and the hole **sweeps** — doubling to 12.
@@ -88,14 +89,15 @@ Points scale with team size. Each team's **net** scores are sorted and compared
 | Point | Value | Won by the team with the… |
 |-------|:-----:|----------------------------|
 | **Low ball**    | 2 | lower *best* net |
-| **Middle ball** | 2 | lower *middle* net — **3v3 only** |
-| **High ball**   | 2 | lower *worst* net |
+| **Middle ball** | 2 | lower *middle* net — **3v3 only** (the worst net is thrown out) |
+| **High ball**   | 2 | lower *worst* net — **2v2** (and uneven teams) |
 | **Greenie**     | 1 | player who got it (awarded in the **Greenie** row) |
 | **Birdie**      | 1 | a **natural (gross) birdie** — no strokes (the other team has none) |
 
-So a **2v2 hole is worth 6 points, a 3v3 hole is worth 8** (uneven teams use low
-+ high only). Ties push. **Win every point outright and the hole sweeps —
-doubling (12 in 2v2, 16 in 3v3).** The dollar move = (Team 1 − Team 2 points) ×
+So a **2v2 hole is worth 6 points, and a 3v3 hole is worth 6** (two balls each —
+2v2 counts low + high, 3v3 counts low + middle and drops the high; uneven teams
+use low + high). Ties push. **Win every point outright and the hole sweeps —
+doubling (12 in both 2v2 and 3v3).** The dollar move = (Team 1 − Team 2 points) ×
 that hole's bet, from Team 1's perspective.
 
 **Presses:** every point is worth the bet (25¢ by default). Raise the bet on any
